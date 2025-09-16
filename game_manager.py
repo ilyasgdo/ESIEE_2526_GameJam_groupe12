@@ -34,7 +34,6 @@ class GameManager:
         self.group.add(self.player)
 
         # centrer la camera sur le joueur
-        self.group.center(self.player.rect.center)
 
 
         pygame.display.flip()
@@ -105,6 +104,8 @@ class GameManager:
     def update(self):
         """Mise à jour des entités du jeu"""
         self.group.update()
+        self.group.center(self.player.rect.center)
+
 
     def render(self):
         """Rendu des entités du jeu"""
@@ -113,11 +114,11 @@ class GameManager:
 
     def handle_input(self):
         pressed = pygame.key.get_pressed()
-        if pressed[pygame.K_UP]:
+        if pressed[pygame.K_z]:
             self.player.move_up()
-        elif pressed[pygame.K_DOWN]:
+        elif pressed[pygame.K_s]:
             self.player.move_down() 
-        elif pressed[pygame.K_LEFT]:
+        elif pressed[pygame.K_q]:
             self.player.move_left()     
-        elif pressed[pygame.K_RIGHT]:
+        elif pressed[pygame.K_d]:
             self.player.move_right()     
