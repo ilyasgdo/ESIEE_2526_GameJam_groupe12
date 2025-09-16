@@ -114,11 +114,12 @@ class GameManager:
 
     def handle_input(self):
         pressed = pygame.key.get_pressed()
+
         if pressed[pygame.K_z]:
             self.player.move_up()
-        elif pressed[pygame.K_s]:
-            self.player.move_down() 
-        elif pressed[pygame.K_q]:
-            self.player.move_left()     
-        elif pressed[pygame.K_d]:
-            self.player.move_right()     
+        if pressed[pygame.K_s]:
+            self.player.move_down()
+        if pressed[pygame.K_q]:
+            self.player.move_left()
+        if pressed[pygame.K_d]:
+            self.player.move_right()
