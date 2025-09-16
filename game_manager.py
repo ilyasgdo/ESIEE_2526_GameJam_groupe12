@@ -25,12 +25,11 @@ class GameManager:
         self.group = None
         self.tmx_data = None
         self.error_message = None
-        self.zoom = 4.0 
         # Initialisation du niveau
         self._init_level()
         self.group.draw(self.screen)
-        player_position = self.spawn_position
-        self.player = Player(player_position.x, player_position.y)
+        player_position = [30, 3000]
+        self.player = Player(player_position[0], player_position[1])
         self.group.add(self.player)
 
         # centrer la camera sur le joueur
@@ -59,9 +58,7 @@ class GameManager:
                 print(f"Chargement de la carte: {tmx_path}")
                 
                 # Chargement TMX
-                tmx_data = pytmx.util_pygame.load_pygame(tmx_path)
-                self.tmx_data = tmx_data
-                self.spawn_position = tmx_data.get_object_by_name("player_spawn")
+                self.tmx_data = pytmx.util_pygame.load_pygame(tmx_path)
                 print(f"TMX chargé - Dimensions: {self.tmx_data.width}x{self.tmx_data.height}")
                 print(f"Taille des tuiles: {self.tmx_data.tilewidth}x{self.tmx_data.tileheight}")
                 print(f"Nombre de couches: {len(self.tmx_data.layers)}")
@@ -82,7 +79,7 @@ class GameManager:
                 # Création du renderer
                 map_layer = pyscroll.orthographic.BufferedRenderer(map_data, self.screen.get_size())
                 print("Renderer créé")
-                
+                map_layer.zoom = 4.0
                 # Création du groupe
                 self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=3)
                 print("Groupe pyscroll créé")
@@ -116,12 +113,19 @@ class GameManager:
 
     def handle_input(self):
         pressed = pygame.key.get_pressed()
-
         if pressed[pygame.K_z]:
             self.player.move_up()
-        if pressed[pygame.K_s]:
-            self.player.move_down()
-        if pressed[pygame.K_q]:
+            self.player.change_animation('up')
+        elif pressed[pygame.K_s]:
+            self.player.move_down() 
+            self.player.change_animation('down')
+
+        elif pressed[pygame.K_q]:
             self.player.move_left()
-        if pressed[pygame.K_d]:
-            self.player.move_right()
+            self.player.change_animation('left')
+
+        elif pressed[pygame.K_d]:
+            self.player.move_right()     
+            self.player.change_animation('right')
+        else:
+            self.player.stop() 
