@@ -7,6 +7,7 @@ Jeu 2D pygame avec bots joueur allié, bot hero et allié joueur
 import pygame
 import sys
 from game_manager import GameManager
+from intro import Intro
 
 # Configuration de base
 SCREEN_WIDTH = 1024
@@ -27,7 +28,12 @@ def main():
     
     # Initialisation du gestionnaire de jeu
     game_manager = GameManager(screen)
-    
+
+    screen_size = (SCREEN_WIDTH, SCREEN_HEIGHT)
+    intro = Intro(game_manager, screen, screen_size)
+
+
+
     # Boucle principale du jeu
     running = True
     while running:
