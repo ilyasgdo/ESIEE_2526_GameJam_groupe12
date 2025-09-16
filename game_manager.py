@@ -29,8 +29,8 @@ class GameManager:
         # Initialisation du niveau
         self._init_level()
         self.group.draw(self.screen)
-        player_position = [30, 40]
-        self.player = Player(player_position[0], player_position[1])
+        player_position = self.spawn_position
+        self.player = Player(player_position.x, player_position.y)
         self.group.add(self.player)
 
         # centrer la camera sur le joueur
@@ -59,7 +59,9 @@ class GameManager:
                 print(f"Chargement de la carte: {tmx_path}")
                 
                 # Chargement TMX
-                self.tmx_data = pytmx.util_pygame.load_pygame(tmx_path)
+                tmx_data = pytmx.util_pygame.load_pygame(tmx_path)
+                self.tmx_data = tmx_data
+                self.spawn_position = tmx_data.get_object_by_name("player_spawn")
                 print(f"TMX chargé - Dimensions: {self.tmx_data.width}x{self.tmx_data.height}")
                 print(f"Taille des tuiles: {self.tmx_data.tilewidth}x{self.tmx_data.tileheight}")
                 print(f"Nombre de couches: {len(self.tmx_data.layers)}")
