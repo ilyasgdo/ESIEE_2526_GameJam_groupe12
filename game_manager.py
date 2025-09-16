@@ -33,7 +33,7 @@ class GameManager:
         self.player = Player(player_position[0], player_position[1])
         self.group.add(self.player)
         self.dialogue_manager = DialogueManager()
-        self.dialogue_manager.load_from_file("assets/dialogues/player.json")
+        self.dialogue_manager.load_from_file("assets/dialogues/scenes.json")
         # centrer la camera sur le joueur
 
         pygame.display.flip()
@@ -131,4 +131,4 @@ class GameManager:
         if self.dialogue_manager.is_active:
             self.dialogue_manager.next_line()
         else:
-            self.dialogue_manager.start("npc1")
+            self.dialogue_manager.start_scene("scene_intro")
