@@ -1,0 +1,27 @@
+# Dépendances pour "Tu n'es pas le héros"
+# Jeu 2D pygame avec bots joueur allié, bot hero et allié joueur
+
+# Core game engine
+pygame-ce>=2.4
+
+# Tilemap support (pour les niveaux)
+pytmx>=3.32
+pyscroll>=2.29
+
+# Pathfinding et IA
+networkx>=3.2
+pathfinding>=1.0
+
+# Behaviour Trees (optionnel pour l'IA avancée)
+py_trees>=2.2
+
+# Reinforcement Learning (optionnel)
+gymnasium>=0.29
+stable-baselines3>=2.3
+torch
+
+# Tests et profiling
+pytest>=8.0
+
+# Packaging
+pyinstaller
