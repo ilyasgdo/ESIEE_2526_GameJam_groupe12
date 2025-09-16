@@ -42,13 +42,11 @@ def main():
                 game_manager.handle_event(event)
         
         # Mise à jour du jeu
-        game_manager.update()
+        #game_manager.update()
         
         # Rendu
-        game_manager.render()
+        #game_manager.render()
         
-        # Mise à jour de l'affichage
-        pygame.display.flip()
         
         # Contrôle des FPS
         clock.tick(FPS)

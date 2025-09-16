@@ -1,0 +1,58 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "map.tmx",
+    "expandedProjectPaths": [
+    ],
+    "fileStates": {
+        "TX Props.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "bout.tsx": {
+            "scaleInDock": 2.0574,
+            "scaleInEditor": 1
+        },
+        "bouts de stone.tsx": {
+            "dynamicWrapping": false,
+            "scaleInDock": 0.7452,
+            "scaleInEditor": 1
+        },
+        "grass.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "map.tmx": {
+            "scale": 0.6206,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 275.5398001933612,
+                "y": 5611.504995165968
+            }
+        }
+    },
+    "last.imagePath": "/Users/clementguerin/Downloads/Pixel Art Top Down - Basic v1.2.2/Texture/Extra",
+    "map.height": 200,
+    "map.lastUsedFormat": "tmx",
+    "map.width": 40,
+    "openFiles": [
+        "map.tmx",
+        "grass.tsx",
+        "TX Props.tsx"
+    ],
+    "project": "gameJam25.tiled-project",
+    "recentFiles": [
+        "TX Props.tsx",
+        "bout.tsx",
+        "bouts de stone.tsx",
+        "grass.tsx",
+        "map.tmx"
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 32,
+        "width": 32
+    }
+}

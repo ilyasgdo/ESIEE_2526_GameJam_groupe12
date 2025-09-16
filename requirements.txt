@@ -12,13 +12,6 @@ pyscroll>=2.29
 networkx>=3.2
 pathfinding>=1.0
 
-# Behaviour Trees (optionnel pour l'IA avancée)
-py_trees>=2.2
-
-# Reinforcement Learning (optionnel)
-gymnasium>=0.29
-stable-baselines3>=2.3
-torch
 
 # Tests et profiling
 pytest>=8.0
