@@ -25,12 +25,16 @@ class GameManager:
         self.group = None
         self.tmx_data = None
         self.error_message = None
-        
+        self.zoom = 4.0 
         # Initialisation du niveau
         self._init_level()
         self.group.draw(self.screen)
-        self.player = Player()
+        player_position = [30, 40]
+        self.player = Player(player_position[0], player_position[1])
         self.group.add(self.player)
+
+        # centrer la camera sur le joueur
+        self.group.center(self.player.rect.center)
 
 
         pygame.display.flip()
@@ -79,7 +83,7 @@ class GameManager:
                 print("Renderer créé")
                 
                 # Création du groupe
-                self.group = pyscroll.PyscrollGroup(map_layer=map_layer)
+                self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=3)
                 print("Groupe pyscroll créé")
                 
                 self.map_loaded = True
@@ -106,3 +110,14 @@ class GameManager:
         """Rendu des entités du jeu"""
         self.group.draw(self.screen)
         pygame.display.flip()
+
+    def handle_input(self):
+        pressed = pygame.key.get_pressed()
+        if pressed[pygame.K_UP]:
+            self.player.move_up()
+        elif pressed[pygame.K_DOWN]:
+            self.player.move_down() 
+        elif pressed[pygame.K_LEFT]:
+            self.player.move_left()     
+        elif pressed[pygame.K_RIGHT]:
+            self.player.move_right()     

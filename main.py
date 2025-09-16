@@ -31,25 +31,25 @@ def main():
     # Boucle principale du jeu
     running = True
     while running:
-        # Gestion des événements
+    # Gestion des événements
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    running = False
-                # Délégation des événements clavier au game manager
-                game_manager.handle_event(event)
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                running = False
+        
+        # Gestion des touches en continu
+        game_manager.handle_input()
         
         # Mise à jour du jeu
         game_manager.update()
         
         # Rendu
         game_manager.render()
-        
-        
+    
         # Contrôle des FPS
         clock.tick(FPS)
+
     
     # Nettoyage et fermeture
     pygame.quit()
