@@ -10,6 +10,8 @@ import os
 import pytmx
 import pyscroll
 
+from player import Player
+
 class GameManager:
     """Gestionnaire principal du jeu"""
     
@@ -27,6 +29,10 @@ class GameManager:
         # Initialisation du niveau
         self._init_level()
         self.group.draw(self.screen)
+        self.player = Player()
+        self.group.add(self.player)
+
+
         pygame.display.flip()
     
     def _init_level(self):
@@ -91,3 +97,12 @@ class GameManager:
                 print(f"  - {path}")
             self.error_message = "Fichier TMX introuvable"
             self.map_loaded = False
+
+    def update(self):
+        """Mise à jour des entités du jeu"""
+        self.group.update()
+
+    def render(self):
+        """Rendu des entités du jeu"""
+        self.group.draw(self.screen)
+        pygame.display.flip()

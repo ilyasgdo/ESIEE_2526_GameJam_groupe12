@@ -42,10 +42,10 @@ def main():
                 game_manager.handle_event(event)
         
         # Mise à jour du jeu
-        #game_manager.update()
+        game_manager.update()
         
         # Rendu
-        #game_manager.render()
+        game_manager.render()
         
         
         # Contrôle des FPS
