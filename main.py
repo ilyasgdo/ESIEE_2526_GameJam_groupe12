@@ -35,11 +35,10 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    running = False
-                # Délégation des événements clavier au game manager
-                game_manager.handle_event(event)
+            #else:
+                # Délégation des événements au game manager
+                #if not game_manager.handle_event(event):
+                    #running = False
         
         # Mise à jour du jeu
         game_manager.update()
