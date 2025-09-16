@@ -9,7 +9,7 @@ import sys
 import os
 import pytmx
 import pyscroll
-
+from dialogue_manager import DialogueManager
 from player import Player
 
 class GameManager:
@@ -32,9 +32,9 @@ class GameManager:
         player_position = [30, 40]
         self.player = Player(player_position[0], player_position[1])
         self.group.add(self.player)
-
+        self.dialogue_manager = DialogueManager()
+        self.dialogue_manager.load_from_file("assets/dialogues/player.json")
         # centrer la camera sur le joueur
-
 
         pygame.display.flip()
     
@@ -110,6 +110,9 @@ class GameManager:
     def render(self):
         """Rendu des entités du jeu"""
         self.group.draw(self.screen)
+        
+        self.dialogue_manager.draw(self.screen)
+        
         pygame.display.flip()
 
     def handle_input(self):
@@ -121,4 +124,11 @@ class GameManager:
         elif pressed[pygame.K_q]:
             self.player.move_left()     
         elif pressed[pygame.K_d]:
-            self.player.move_right()     
+            self.player.move_right()
+
+    def handle_dialogue(self):
+        """Gérer le passage au dialogue suivant ou démarrer un dialogue"""
+        if self.dialogue_manager.is_active:
+            self.dialogue_manager.next_line()
+        else:
+            self.dialogue_manager.start("npc1")
