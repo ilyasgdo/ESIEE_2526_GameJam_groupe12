@@ -19,7 +19,7 @@ def main():
     pygame.init()
     
     # Création de la fenêtre
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
     pygame.display.set_caption("Tu n'es pas le héros - GameJam Groupe 12")
     
     # Horloge pour contrôler les FPS
