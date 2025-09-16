@@ -20,7 +20,10 @@ def main():
     pygame.init()
     
     # Création de la fenêtre
-    screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+    screen_size = (SCREEN_WIDTH, SCREEN_HEIGHT)
+    #screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+    screen = pygame.display.set_mode(screen_size)
+
     pygame.display.set_caption("Tu n'es pas le héros - GameJam Groupe 12")
     
     # Horloge pour contrôler les FPS
@@ -29,9 +32,8 @@ def main():
     # Initialisation du gestionnaire de jeu
     game_manager = GameManager(screen)
 
-    screen_size = (SCREEN_WIDTH, SCREEN_HEIGHT)
     intro = Intro(game_manager, screen, screen_size)
-
+    intro.start()
 
 
     # Boucle principale du jeu
