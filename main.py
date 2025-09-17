@@ -7,6 +7,7 @@ Jeu 2D pygame avec bots joueur allié, bot hero et allié joueur
 import pygame
 import sys
 from game_manager import GameManager
+from intro import Intro
 
 # Configuration de base
 SCREEN_WIDTH = 1024
@@ -19,15 +20,23 @@ def main():
     pygame.init()
     
     # Création de la fenêtre
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("Tu n'es pas le héros - GameJam Groupe 12")
+    screen_size = (SCREEN_WIDTH, SCREEN_HEIGHT)
+    #screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+    screen = pygame.display.set_mode(screen_size)
+
+    pygame.display.set_caption("Bro thinks he's the main character 💀 - GameJam Groupe 12")
+
     
     # Horloge pour contrôler les FPS
     clock = pygame.time.Clock()
     
     # Initialisation du gestionnaire de jeu
     game_manager = GameManager(screen)
-    
+
+    intro = Intro(game_manager, screen, screen_size)
+    intro.start()
+
+
     # Boucle principale du jeu
     running = True
     while running:

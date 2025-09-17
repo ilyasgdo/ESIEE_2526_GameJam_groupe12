@@ -25,12 +25,12 @@ class GameManager:
         self.group = None
         self.tmx_data = None
         self.error_message = None
-        self.zoom = 4.0 
         # Initialisation du niveau
         self._init_level()
         self.group.draw(self.screen)
-        player_position = [30, 40]
-        self.player = Player(player_position[0], player_position[1])
+        player_position = self.spawn_position
+        self.player = Player(player_position.x, player_position.y)
+
         self.group.add(self.player)
         self.dialogue_manager = DialogueManager()
         self.dialogue_manager.load_from_file("assets/dialogues/scenes.json")
@@ -59,7 +59,9 @@ class GameManager:
                 print(f"Chargement de la carte: {tmx_path}")
                 
                 # Chargement TMX
-                self.tmx_data = pytmx.util_pygame.load_pygame(tmx_path)
+                tmx_data = pytmx.util_pygame.load_pygame(tmx_path)
+                self.tmx_data = tmx_data
+                self.spawn_position = tmx_data.get_object_by_name("player_spawn")
                 print(f"TMX chargé - Dimensions: {self.tmx_data.width}x{self.tmx_data.height}")
                 print(f"Taille des tuiles: {self.tmx_data.tilewidth}x{self.tmx_data.tileheight}")
                 print(f"Nombre de couches: {len(self.tmx_data.layers)}")
@@ -80,7 +82,7 @@ class GameManager:
                 # Création du renderer
                 map_layer = pyscroll.orthographic.BufferedRenderer(map_data, self.screen.get_size())
                 print("Renderer créé")
-                
+                map_layer.zoom = 4.0
                 # Création du groupe
                 self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=3)
                 print("Groupe pyscroll créé")
@@ -117,14 +119,21 @@ class GameManager:
 
     def handle_input(self):
         pressed = pygame.key.get_pressed()
+        is_moving = False
         if pressed[pygame.K_z]:
             self.player.move_up()
-        elif pressed[pygame.K_s]:
-            self.player.move_down() 
-        elif pressed[pygame.K_q]:
-            self.player.move_left()     
-        elif pressed[pygame.K_d]:
+            is_moving = True
+        if pressed[pygame.K_s]:
+            self.player.move_down()
+            is_moving = True
+        if pressed[pygame.K_q]:
+            self.player.move_left()
+            is_moving = True
+        if pressed[pygame.K_d]:
             self.player.move_right()
+            is_moving = True
+        if not is_moving:
+            self.player.stop()
 
     def handle_dialogue(self):
         """Gérer le passage au dialogue suivant ou démarrer un dialogue"""
