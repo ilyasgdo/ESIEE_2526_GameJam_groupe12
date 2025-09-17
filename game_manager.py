@@ -43,9 +43,10 @@ class GameManager:
         self.fireballs = pygame.sprite.Group()
         self.last_shot_time = 0
         self.shoot_cooldown = 2000  # 2 sec en millisecondes
-        # Créer le bot allié qui se déplace vers le haut - spawn près du joueur
-        ally_spawn_x = player_position.x + 30  # Spawn près du joueur
-        ally_spawn_y = player_position.y + 30
+        
+        # Créer le bot allié avec position initiale spécifique
+        ally_spawn_x = 786.67
+        ally_spawn_y = 5900.67
         self.ally_bot = AllyBot(ally_spawn_x, ally_spawn_y, self.player)
         self.group.add(self.ally_bot)
         self.percentage = 50.0  # Pourcentage initial de 50%
@@ -80,9 +81,7 @@ class GameManager:
         # Créer la minimap
         self.minimap = Minimap(self.screen, self.tmx_data, x=10, y=10, width=200, height=150)
 
-        # centrer la camera sur le joueur
-        self.ui = UIManager(screen.get_size())
-        self.input_locked_for_ui = False  # si True, ignorer input joueur, CINEMATIQUE
+        # Créer l'UI Manager et initialiser les variables d'état
         self.ui = UIManager(screen.get_size())
         self.input_locked_for_ui = False  # si True, ignorer input joueur, CINEMATIQUE
 

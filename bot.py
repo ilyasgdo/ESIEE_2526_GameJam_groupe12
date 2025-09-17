@@ -172,7 +172,6 @@ class Bot(pygame.sprite.Sprite):
             if self.current_checkpoint_index >= len(self.checkpoints):
                 # Recommencer depuis le premier checkpoint
                 self.current_checkpoint_index = 0
-                print(f"Bot: Tous les checkpoints atteints, recommence depuis le début")
             
             # Obtenir le checkpoint actuel
             current_checkpoint = self.checkpoints[self.current_checkpoint_index]
@@ -180,13 +179,7 @@ class Bot(pygame.sprite.Sprite):
             
             # Vérifier si le checkpoint actuel est atteint
             if distance_to_checkpoint <= self.checkpoint_reached_distance:
-                print(f"Bot: Checkpoint {self.current_checkpoint_index + 1} atteint à {current_checkpoint}")
                 self.current_checkpoint_index += 1
-                
-                # Si ce n'était pas le dernier checkpoint, passer au suivant
-                if self.current_checkpoint_index < len(self.checkpoints):
-                    next_checkpoint = self.checkpoints[self.current_checkpoint_index]
-                    print(f"Bot: Direction vers le checkpoint {self.current_checkpoint_index + 1} à {next_checkpoint}")
             
             # Définir la cible comme le checkpoint actuel
             if self.current_checkpoint_index < len(self.checkpoints):
