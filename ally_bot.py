@@ -3,32 +3,39 @@ import math
 import random
 
 class AllyBot(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, x, y, player):
         super().__init__()
         # Utiliser le même sprite sheet que le joueur mais avec une couleur différente
-        self.sprite_sheet = pygame.image.load('assets/sprites/player/RACCOONSPRITESHEET.png').convert_alpha()
+        self.sprite_sheet = pygame.image.load('assets/sprites/player/BIRDSPRITESHEET_Blue.png').convert_alpha()
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [float(x), float(y)]
-        self.speed = 1.5  # Vitesse modérée
+        self.old_position = self.position.copy()  # Pour la gestion des collisions
+        self.speed = 2.5  # Légèrement plus rapide que les autres bots
         self.frame_index = 0
-        self.animation_speed = 0.15
-        self.current_direction = 'up'  # Direction principale vers le haut
+        self.animation_speed = 1
+        self.current_direction = 'down'
         
-        # Variables pour mouvement aléatoire vers le haut
+        # Référence au joueur à suivre
+        self.player = player
+        
+        # Variables pour l'IA de suivi
+        self.follow_distance = 60  # Distance à maintenir avec le joueur
+        self.orbit_radius = 45     # Rayon de l'orbite autour du joueur
+        self.orbit_angle = random.uniform(0, 2 * math.pi)  # Angle initial aléatoire
+        self.orbit_speed = 0.025   # Vitesse de rotation autour du joueur
+        self.state = "following"   # États: "following", "orbiting", "exploring"
+        self.state_timer = 0
+        self.state_change_interval = 150  # Changer d'état toutes les 2.5 secondes (60 FPS)
+        
+        # Variables pour mouvement fluide
         self.target_x = x
         self.target_y = y
         self.velocity_x = 0
         self.velocity_y = 0
-        self.acceleration = 0.2
-        self.friction = 0.9
+        self.acceleration = 0.35
+        self.friction = 0.88
         
-        # Variables pour le mouvement aléatoire
-        self.direction_change_timer = 0
-        self.direction_change_interval = random.randint(60, 180)  # 1-3 secondes
-        self.random_direction_x = 0
-        self.random_direction_y = -1  # Tendance vers le haut
-        
-        # Variables pour des mouvements plus naturels
+        # Variables pour des mouvements plus naturels et réactifs
         self.micro_movement_timer = 0
         self.micro_movement_x = 0
         self.micro_movement_y = 0
@@ -36,23 +43,60 @@ class AllyBot(pygame.sprite.Sprite):
         self.is_hesitating = False
         self.natural_speed_variation = 1.0
         self.breathing_timer = 0
+        self.last_direction_change = 0
         
-        # Limites de mouvement (pour rester dans les limites de la carte)
-        self.map_width = 1280  # 40 * 32
-        self.map_height = 6400  # 200 * 32
+        # Variables pour l'exploration autonome
+        self.exploration_target_x = x
+        self.exploration_target_y = y
+        self.exploration_timer = 0
+        self.exploration_change_interval = 120  # Changer de cible d'exploration toutes les 2 secondes
+        
+        # Système de collision avec les objets TMX
+        self.collision_objects = []
         
         # Récupérer toutes les frames (même système que le joueur)
         self.animations = {
-            'down': self.load_row(5),
-            'left': self.load_row(7),
-            'right': self.load_row(9),
-            'up': self.load_row(11)
+            'down': self.load_row(0),
+            'left': self.load_row(2),
+            'right': self.load_row(1),
+            'up': self.load_row(3)
         }
         
-        # Appliquer une teinte verte pour distinguer le bot allié
+        # Appliquer une teinte différente pour distinguer le bot allié
+        self.apply_tint((200, 255, 200))  # Teinte verte
         
-        self.image = self.animations['up'][0]
-        self.is_moving = True
+        self.image = self.animations['down'][0]
+        self.is_moving = False
+
+    def set_collision_objects(self, collision_objects):
+        """Définir les objets de collision TMX"""
+        self.collision_objects = collision_objects
+
+    def save_position(self):
+        """Sauvegarder la position actuelle pour pouvoir revenir en arrière en cas de collision"""
+        self.old_position = self.position.copy()
+
+    def restore_position(self):
+        """Restaurer la position précédente en cas de collision"""
+        self.position = self.old_position.copy()
+        self.rect.topleft = self.position
+
+    def check_collision_with_rect(self, rect):
+        """Vérifier la collision avec un rectangle donné"""
+        return (self.position[0] >= rect.x and self.position[1] >= rect.y and
+                self.position[0] <= rect.x + rect.width and self.position[1] <= rect.y + rect.height)
+
+    def check_collision_at_position(self, x, y):
+        """Vérifier s'il y a collision à une position donnée"""
+        for obj in self.collision_objects:
+            if (x >= obj.x and y >= obj.y and
+                x <= obj.x + obj.width and y <= obj.y + obj.height):
+                return True
+        return False
+
+    def can_move_to(self, new_x, new_y):
+        """Vérifier si le bot peut se déplacer à la position donnée"""
+        return not self.check_collision_at_position(new_x, new_y)
 
     def get_image(self, x, y, scale=4):
         frame = pygame.Surface((32, 32), pygame.SRCALPHA)
@@ -213,8 +257,28 @@ class AllyBot(pygame.sprite.Sprite):
 
     def update(self):
         """Mise à jour principale du bot allié"""
-        self.update_random_movement()
+        self.update_ai()
         self.update_movement()
+        
+        # Mettre à jour le rect
+        self.rect.center = (int(self.position[0]), int(self.position[1]))
+        
+        # Déterminer la direction d'animation basée sur le mouvement
+        movement_threshold = 0.2
+        if abs(self.velocity_x) > movement_threshold or abs(self.velocity_y) > movement_threshold:
+            self.is_moving = True
+            if abs(self.velocity_x) > abs(self.velocity_y):
+                if self.velocity_x > 0:
+                    self.change_animation('right')
+                else:
+                    self.change_animation('left')
+            else:
+                if self.velocity_y > 0:
+                    self.change_animation('down')
+                else:
+                    self.change_animation('up')
+        else:
+            self.is_moving = False
         
         # Animation
         if self.is_moving:
@@ -228,3 +292,178 @@ class AllyBot(pygame.sprite.Sprite):
     def get_position(self):
         """Retourne la position actuelle du bot allié"""
         return (self.position[0], self.position[1])
+
+    def update_ai(self):
+        """Mise à jour de l'IA du bot allié pour suivre le joueur"""
+        # Gérer les changements d'état
+        self.state_timer += 1
+        if self.state_timer >= self.state_change_interval:
+            self.state_timer = 0
+            # Changer d'état de manière aléatoire
+            states = ["following", "orbiting", "exploring"]
+            current_index = states.index(self.state)
+            # Éviter de rester dans le même état
+            new_states = [s for s in states if s != self.state]
+            self.state = random.choice(new_states)
+            
+            if self.state == "orbiting":
+                # Initialiser l'angle d'orbite basé sur la position actuelle
+                self.orbit_angle = self.get_angle_to_player()
+            elif self.state == "exploring":
+                # Définir une nouvelle cible d'exploration
+                self.set_exploration_target()
+        
+        distance_to_player = self.get_distance_to_player()
+        
+        if self.state == "following":
+            # Comportement de suivi du joueur
+            if distance_to_player > self.follow_distance:
+                # Se rapprocher du joueur
+                angle = self.get_angle_to_player()
+                player_pos = self.player.position
+                self.target_x = player_pos[0] - math.cos(angle) * (self.follow_distance * 0.8)
+                self.target_y = player_pos[1] - math.sin(angle) * (self.follow_distance * 0.8)
+            else:
+                # Rester à distance du joueur
+                angle = self.get_angle_to_player()
+                player_pos = self.player.position
+                self.target_x = player_pos[0] - math.cos(angle) * self.follow_distance
+                self.target_y = player_pos[1] - math.sin(angle) * self.follow_distance
+                
+        elif self.state == "orbiting":
+            # Comportement d'orbite autour du joueur
+            self.orbit_angle += self.orbit_speed
+            if self.orbit_angle > 2 * math.pi:
+                self.orbit_angle -= 2 * math.pi
+            
+            player_pos = self.player.position
+            self.target_x = player_pos[0] + math.cos(self.orbit_angle) * self.orbit_radius
+            self.target_y = player_pos[1] + math.sin(self.orbit_angle) * self.orbit_radius
+            
+        elif self.state == "exploring":
+            # Comportement d'exploration autonome
+            self.exploration_timer += 1
+            if self.exploration_timer >= self.exploration_change_interval:
+                self.exploration_timer = 0
+                self.set_exploration_target()
+            
+            # Si trop loin du joueur, revenir vers lui
+            if distance_to_player > self.follow_distance * 2:
+                self.state = "following"
+                self.state_timer = 0
+
+    def set_exploration_target(self):
+        """Définir une nouvelle cible d'exploration près du joueur"""
+        player_pos = self.player.position
+        # Exploration dans un rayon autour du joueur
+        exploration_radius = 100
+        angle = random.uniform(0, 2 * math.pi)
+        self.exploration_target_x = player_pos[0] + math.cos(angle) * exploration_radius
+        self.exploration_target_y = player_pos[1] + math.sin(angle) * exploration_radius
+        self.target_x = self.exploration_target_x
+        self.target_y = self.exploration_target_y
+
+    def get_distance_to_player(self):
+        """Calculer la distance au joueur"""
+        player_pos = self.player.position
+        dx = player_pos[0] - self.position[0]
+        dy = player_pos[1] - self.position[1]
+        return math.sqrt(dx * dx + dy * dy)
+
+    def get_angle_to_player(self):
+        """Calculer l'angle vers le joueur"""
+        player_pos = self.player.position
+        dx = player_pos[0] - self.position[0]
+        dy = player_pos[1] - self.position[1]
+        return math.atan2(dy, dx)
+
+    def update_movement(self):
+        """Mise à jour du mouvement fluide vers la cible avec gestion des collisions"""
+        # Sauvegarder la position actuelle
+        self.save_position()
+        
+        # Micro-mouvements pour simuler l'imprécision naturelle
+        self.micro_movement_timer += 1
+        if self.micro_movement_timer >= random.randint(4, 8):  # Variation dans le timing
+            self.micro_movement_timer = 0
+            self.micro_movement_x = random.uniform(-0.1, 0.1)
+            self.micro_movement_y = random.uniform(-0.1, 0.1)
+        
+        # Effet de "respiration" subtil
+        self.breathing_timer += 0.08 + random.uniform(-0.01, 0.01)
+        breathing_effect_x = math.sin(self.breathing_timer) * 0.05
+        breathing_effect_y = math.cos(self.breathing_timer * 0.9) * 0.03
+        
+        # Calculer la direction vers la cible avec effets naturels
+        adjusted_target_x = self.target_x + self.micro_movement_x + breathing_effect_x
+        adjusted_target_y = self.target_y + self.micro_movement_y + breathing_effect_y
+        
+        dx = adjusted_target_x - self.position[0]
+        dy = adjusted_target_y - self.position[1]
+        distance_to_target = math.sqrt(dx*dx + dy*dy)
+        
+        # Hésitation occasionnelle lors de changements de direction
+        if distance_to_target > 3:
+            current_direction = math.atan2(dy, dx)
+            if abs(current_direction - self.last_direction_change) > 0.3:
+                if random.random() < 0.12 and not self.is_hesitating:  # 12% de chance
+                    self.is_hesitating = True
+                    self.hesitation_timer = random.randint(5, 12)
+                    self.last_direction_change = current_direction
+        
+        # Gérer l'hésitation
+        if self.is_hesitating:
+            self.hesitation_timer -= 1
+            if self.hesitation_timer <= 0:
+                self.is_hesitating = False
+            # Réduire le mouvement pendant l'hésitation
+            self.natural_speed_variation = 0.5 + random.uniform(0, 0.3)
+        else:
+            # Variation naturelle de la vitesse
+            base_variation = 0.9 + random.uniform(0, 0.3)
+            # Ajuster selon la distance (plus loin = plus rapide)
+            distance_factor = min(1.2, 0.95 + distance_to_target * 0.003)
+            self.natural_speed_variation = base_variation * distance_factor
+        
+        # Appliquer l'accélération vers la cible avec transition douce
+        acceleration_factor = self.acceleration * 0.01 * self.natural_speed_variation
+        target_velocity_x = dx * acceleration_factor
+        target_velocity_y = dy * acceleration_factor
+        
+        # Transition plus douce vers la nouvelle vélocité
+        transition_speed = 0.12 if not self.is_hesitating else 0.04
+        self.velocity_x += (target_velocity_x - self.velocity_x) * transition_speed
+        self.velocity_y += (target_velocity_y - self.velocity_y) * transition_speed
+        
+        # Limiter la vitesse maximale avec variation naturelle
+        current_max_speed = self.speed * (0.9 + random.uniform(0, 0.2))
+        speed = math.sqrt(self.velocity_x * self.velocity_x + self.velocity_y * self.velocity_y)
+        if speed > current_max_speed:
+            self.velocity_x = (self.velocity_x / speed) * current_max_speed
+            self.velocity_y = (self.velocity_y / speed) * current_max_speed
+        
+        # Appliquer une friction variable
+        friction_factor = self.friction + random.uniform(-0.015, 0.015)
+        self.velocity_x *= friction_factor
+        self.velocity_y *= friction_factor
+        
+        # Calculer la nouvelle position
+        new_x = self.position[0] + self.velocity_x
+        new_y = self.position[1] + self.velocity_y
+        
+        # Vérifier les collisions avant de mettre à jour la position
+        if self.can_move_to(new_x, new_y):
+            # Pas de collision, mettre à jour la position
+            self.position[0] = new_x
+            self.position[1] = new_y
+        else:
+            # Collision détectée, essayer de se déplacer sur un seul axe
+            if self.can_move_to(new_x, self.position[1]):
+                # Mouvement horizontal possible
+                self.position[0] = new_x
+            elif self.can_move_to(self.position[0], new_y):
+                # Mouvement vertical possible
+                self.position[1] = new_y
+            else:
+                # Aucun mouvement possible, restaurer la position
+                self.restore_position()

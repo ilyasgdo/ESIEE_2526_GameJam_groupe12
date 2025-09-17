@@ -46,7 +46,7 @@ class GameManager:
         # Créer le bot allié qui se déplace vers le haut - spawn près du joueur
         ally_spawn_x = player_position.x + 30  # Spawn près du joueur
         ally_spawn_y = player_position.y + 30
-        self.ally_bot = AllyBot(ally_spawn_x, ally_spawn_y)
+        self.ally_bot = AllyBot(ally_spawn_x, ally_spawn_y, self.player)
         self.group.add(self.ally_bot)
         self.percentage = 50.0  # Pourcentage initial de 50%
         self.score = 0
@@ -65,6 +65,14 @@ class GameManager:
         bot_spawn_y = (self.tmx_data.height * self.tmx_data.tileheight) - 100  # Position proche du bord bas
         self.bot = Bot(bot_spawn_x, bot_spawn_y, self.ally_bot)  # Le bot suit maintenant l'ally_bot
         self.group.add(self.bot)
+        
+        # Configurer les objets de collision pour tous les bots
+        self.ally_bot.set_collision_objects(self.collisions)
+        self.bot.set_collision_objects(self.collisions)
+        
+        # Configurer les objets de collision pour tous les subordonnés
+        for subordinate in self.formation_manager.get_subordinates():
+            subordinate.set_collision_objects(self.collisions)
         
         # Créer la minimap
         self.minimap = Minimap(self.screen, self.tmx_data, x=10, y=10, width=200, height=150)

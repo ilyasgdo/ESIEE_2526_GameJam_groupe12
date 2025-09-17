@@ -9,6 +9,7 @@ class SubordinateBot(pygame.sprite.Sprite):
         self.sprite_sheet = pygame.image.load('assets/sprites/player/CATSPRITESHEET_Orange.png').convert_alpha()
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [float(x), float(y)]
+        self.old_position = self.position.copy()  # Pour la gestion des collisions
         self.speed = 1.8  # Légèrement plus rapide pour rattraper le leader
         self.frame_index = 0
         self.animation_speed = 0.15
@@ -68,6 +69,9 @@ class SubordinateBot(pygame.sprite.Sprite):
         self.separation_force = [0, 0]
         self.cohesion_force = [0, 0]
         
+        # Système de collision avec les objets TMX
+        self.collision_objects = []
+        
         # Récupérer toutes les frames (même système que le joueur)
         self.animations = {
             'down': self.load_row(5),
@@ -81,6 +85,36 @@ class SubordinateBot(pygame.sprite.Sprite):
         
         self.image = self.animations['up'][0]
         self.is_moving = True
+
+    def set_collision_objects(self, collision_objects):
+        """Définir les objets de collision TMX"""
+        self.collision_objects = collision_objects
+
+    def save_position(self):
+        """Sauvegarder la position actuelle pour pouvoir revenir en arrière en cas de collision"""
+        self.old_position = self.position.copy()
+
+    def restore_position(self):
+        """Restaurer la position précédente en cas de collision"""
+        self.position = self.old_position.copy()
+        self.rect.topleft = self.position
+
+    def check_collision_with_rect(self, rect):
+        """Vérifier la collision avec un rectangle donné"""
+        return (self.position[0] >= rect.x and self.position[1] >= rect.y and
+                self.position[0] <= rect.x + rect.width and self.position[1] <= rect.y + rect.height)
+
+    def check_collision_at_position(self, x, y):
+        """Vérifier s'il y a collision à une position donnée"""
+        for obj in self.collision_objects:
+            if (x >= obj.x and y >= obj.y and
+                x <= obj.x + obj.width and y <= obj.y + obj.height):
+                return True
+        return False
+
+    def can_move_to(self, new_x, new_y):
+        """Vérifier si le bot peut se déplacer à la position donnée"""
+        return not self.check_collision_at_position(new_x, new_y)
 
     def get_image(self, x, y):
         """Récupère une image du sprite sheet"""
@@ -287,10 +321,30 @@ class SubordinateBot(pygame.sprite.Sprite):
             adjusted_velocity_x = (adjusted_velocity_x / speed) * current_max_speed
             adjusted_velocity_y = (adjusted_velocity_y / speed) * current_max_speed
         
-        # Mettre à jour la position
-        self.position[0] += adjusted_velocity_x
-        self.position[1] += adjusted_velocity_y
+        # Sauvegarder la position actuelle avant le mouvement
+        self.save_position()
         
+        # Calculer la nouvelle position
+        new_x = self.position[0] + adjusted_velocity_x
+        new_y = self.position[1] + adjusted_velocity_y
+        
+        # Vérifier les collisions avant de se déplacer
+        if self.can_move_to(new_x, new_y):
+            # Pas de collision, mettre à jour la position
+            self.position[0] = new_x
+            self.position[1] = new_y
+        else:
+            # Collision détectée, essayer de se déplacer sur un seul axe
+            if self.can_move_to(new_x, self.position[1]):
+                # Mouvement horizontal possible
+                self.position[0] = new_x
+            elif self.can_move_to(self.position[0], new_y):
+                # Mouvement vertical possible
+                self.position[1] = new_y
+            else:
+                # Aucun mouvement possible, restaurer la position
+                self.restore_position()
+
         # Déterminer la direction d'animation avec plus de fluidité
         if abs(adjusted_velocity_x) > abs(adjusted_velocity_y):
             if adjusted_velocity_x > 0.15:

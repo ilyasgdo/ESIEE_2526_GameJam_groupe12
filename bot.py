@@ -9,6 +9,7 @@ class Bot(pygame.sprite.Sprite):
         self.sprite_sheet = pygame.image.load('assets/sprites/player/BIRDSPRITESHEET_Blue.png').convert_alpha()
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [float(x), float(y)]
+        self.old_position = self.position.copy()  # Pour la gestion des collisions
         self.speed = 2  # Légèrement plus lent que le joueur
         self.frame_index = 0
         self.animation_speed = 0.15
@@ -44,6 +45,9 @@ class Bot(pygame.sprite.Sprite):
         self.breathing_timer = 0
         self.last_direction_change = 0
         
+        # Système de collision avec les objets TMX
+        self.collision_objects = []
+        
         # Récupérer toutes les frames (même système que le joueur)
         self.animations = {
             'down': self.load_row(0),
@@ -58,10 +62,40 @@ class Bot(pygame.sprite.Sprite):
         self.image = self.animations['down'][0]
         self.is_moving = False
 
+    def set_collision_objects(self, collision_objects):
+        """Définir les objets de collision TMX"""
+        self.collision_objects = collision_objects
+
+    def save_position(self):
+        """Sauvegarder la position actuelle pour pouvoir revenir en arrière en cas de collision"""
+        self.old_position = self.position.copy()
+
+    def restore_position(self):
+        """Restaurer la position précédente en cas de collision"""
+        self.position = self.old_position.copy()
+        self.rect.topleft = self.position
+
+    def check_collision_with_rect(self, rect):
+        """Vérifier la collision avec un rectangle donné"""
+        return (self.position[0] >= rect.x and self.position[1] >= rect.y and
+                self.position[0] <= rect.x + rect.width and self.position[1] <= rect.y + rect.height)
+
+    def check_collision_at_position(self, x, y):
+        """Vérifier s'il y a collision à une position donnée"""
+        for obj in self.collision_objects:
+            if (x >= obj.x and y >= obj.y and
+                x <= obj.x + obj.width and y <= obj.y + obj.height):
+                return True
+        return False
+
+    def can_move_to(self, new_x, new_y):
+        """Vérifier si le bot peut se déplacer à la position donnée"""
+        return not self.check_collision_at_position(new_x, new_y)
+
     def get_image(self, x, y, scale=2):
+        """Extraire une image du sprite sheet"""
         frame = pygame.Surface((32, 32), pygame.SRCALPHA)
         frame.blit(self.sprite_sheet, (0, 0), (x, y, 32, 32))
-
         # Agrandir la frame
         size = frame.get_width() * scale, frame.get_height() * scale
         frame = pygame.transform.scale(frame, size)
@@ -149,6 +183,9 @@ class Bot(pygame.sprite.Sprite):
 
     def update_movement(self):
         """Mise à jour du mouvement fluide vers la cible avec des comportements naturels"""
+        # Sauvegarder la position actuelle
+        self.save_position()
+        
         # Micro-mouvements pour simuler l'imprécision naturelle
         self.micro_movement_timer += 1
         if self.micro_movement_timer >= random.randint(4, 10):  # Variation dans le timing
@@ -214,10 +251,27 @@ class Bot(pygame.sprite.Sprite):
         self.velocity_x *= friction_factor
         self.velocity_y *= friction_factor
         
-        # Mettre à jour la position
-        self.position[0] += self.velocity_x
-        self.position[1] += self.velocity_y
+        # Calculer la nouvelle position
+        new_x = self.position[0] + self.velocity_x
+        new_y = self.position[1] + self.velocity_y
         
+        # Vérifier les collisions avant de mettre à jour la position
+        if self.can_move_to(new_x, new_y):
+            # Pas de collision, mettre à jour la position
+            self.position[0] = new_x
+            self.position[1] = new_y
+        else:
+            # Collision détectée, essayer de se déplacer sur un seul axe
+            if self.can_move_to(new_x, self.position[1]):
+                # Mouvement horizontal possible
+                self.position[0] = new_x
+            elif self.can_move_to(self.position[0], new_y):
+                # Mouvement vertical possible
+                self.position[1] = new_y
+            else:
+                # Aucun mouvement possible, restaurer la position
+                self.restore_position()
+
         # Déterminer la direction d'animation basée sur le mouvement avec plus de fluidité
         movement_threshold = 0.3  # Seuil plus bas pour plus de réactivité
         if abs(self.velocity_x) > abs(self.velocity_y):
