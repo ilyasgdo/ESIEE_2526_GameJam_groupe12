@@ -58,15 +58,18 @@ class Bot(pygame.sprite.Sprite):
         self.image = self.animations['down'][0]
         self.is_moving = False
 
-    def get_image(self, x, y):
-        """Extraire une image du sprite sheet"""
-        image = pygame.Surface((32, 32), pygame.SRCALPHA)
-        image.blit(self.sprite_sheet, (0, 0), (x, y, 32, 32))
-        return image
+    def get_image(self, x, y, scale=2):
+        frame = pygame.Surface((32, 32), pygame.SRCALPHA)
+        frame.blit(self.sprite_sheet, (0, 0), (x, y, 32, 32))
 
-    def load_row(self, row):
-        """Charge une ligne de 4 frames à partir du sprite sheet"""
-        return [self.get_image(col * 32, row * 32) for col in range(4)]
+        # Agrandir la frame
+        size = frame.get_width() * scale, frame.get_height() * scale
+        frame = pygame.transform.scale(frame, size)
+        return frame
+
+    def load_row(self, row, scale=2):
+        """Charge une ligne d'animation et scale chaque frame"""
+        return [self.get_image(col * 32, row * 32, scale) for col in range(4)]
     
     def apply_tint(self, color):
         """Appliquer une teinte colorée aux animations pour différencier le bot"""
