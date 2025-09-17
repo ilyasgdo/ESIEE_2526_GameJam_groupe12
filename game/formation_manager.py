@@ -1,5 +1,5 @@
 import math
-from subordinate_bot import SubordinateBot
+from Allierbot.subordinate_bot import SubordinateBot
 
 class FormationManager:
     def __init__(self, leader):

@@ -8,15 +8,17 @@ import pygame
 import os
 import pytmx
 import pyscroll
-from dialogue_manager import DialogueManager
-from fire_ball import FireBall
-from player import Player
-from bot import Bot
-from ally_bot import AllyBot
-from minimap import Minimap
-from formation_manager import FormationManager
-from UIManager import UIManager
-from UIManager import UIManager
+
+from actions.actions import TAB_ACTION
+from actions.trap import Trap
+from game.dialogue_manager import DialogueManager
+from actions.fire_ball import FireBall
+from player.player import Player
+from hero_bot.bot import Bot
+from Allierbot.ally_bot import AllyBot
+from interface.minimap import Minimap
+from game.formation_manager import FormationManager
+from interface.UIManager import UIManager
 
 class GameManager:
     """Gestionnaire principal du jeu"""
@@ -42,8 +44,8 @@ class GameManager:
         self.dialogue_manager.load_from_file("assets/dialogues/scenes.json")
         self.fireballs = pygame.sprite.Group()
         self.last_shot_time = 0
-        self.shoot_cooldown = 2000  # 2 sec en millisecondes
-        
+        self.last_placed_trap = 0
+
         # Créer le bot allié avec position initiale spécifique
         ally_spawn_x = 786.67
         ally_spawn_y = 5900.67
@@ -94,7 +96,7 @@ class GameManager:
             'assets/maps/map.tmx',
             os.path.join(os.path.dirname(__file__), 'assets', 'maps', 'map.tmx'),
             os.path.join(os.path.dirname(__file__), 'assets', 'map.tmx'),
-            os.path.join('assets', 'maps', 'map.tmx')
+            os.path.join('../assets', 'maps', 'map.tmx')
         ]
         
         tmx_path = None
@@ -208,7 +210,7 @@ class GameManager:
             
             for fireball in collisions:
                 # Augmenter le pourcentage de 0.5%
-                self.percentage += 0.5
+                self.percentage += fireball.damage
                 # Plafonner le pourcentage à 100% si nécessaire
                 if self.percentage > 100.0:
                     self.percentage = 100.0
@@ -260,12 +262,10 @@ class GameManager:
 
         pygame.display.flip()
 
-    def handle_input(self):
-        pressed = pygame.key.get_pressed()
-        is_moving = False
 
+    def handle_movent(self, pressed):
         self.player.save_location()
-
+        is_moving = False
         if pressed[pygame.K_z]:
             self.player.move_up()
             is_moving = True
@@ -286,17 +286,8 @@ class GameManager:
         if pressed[pygame.K_s]: self.player.movement_directions['down'] = True
         if pressed[pygame.K_q]: self.player.movement_directions['left'] = True
         if pressed[pygame.K_d]: self.player.movement_directions['right'] = True
-        if pressed[pygame.K_SPACE]:
-            now = pygame.time.get_ticks()
-            if now - self.last_shot_time >= self.shoot_cooldown:
-                fireball = FireBall(
-                    self.player.position[0] + 16,  # centre du sprite joueur
-                    self.player.position[1] + 16,
-                    self.player.last_direction
-                )
-                self.fireballs.add(fireball)
-                self.group.add(fireball)  # pyscroll la gère
-                self.last_shot_time = now
+
+    def handle_collision(self):
         for obj in self.collisions:
             top_left = (obj.x, obj.y)
             bottom_left = (obj.x, obj.y + obj.height)
@@ -310,6 +301,70 @@ class GameManager:
                     player_position[0] <= top_right[0] and player_position[1] >= top_right[1]) and (
                     player_position[0] <= bottom_right[0] and player_position[1] <= bottom_right[1]):
                 self.player.move_player_back()
+
+
+    def can_place_action(self, now, last, countdown):
+        if now - last >= countdown:
+            return True
+        return False
+
+    def get_now(self):
+        return pygame.time.get_ticks()
+
+    def handle_fireballs(self):
+        now = self.get_now()
+        fireball = FireBall(
+            self.player.position[0] + 16,  # centre du sprite joueur
+            self.player.position[1] + 16,
+            self.player.last_direction
+        )
+        if self.can_place_action(now, self.last_shot_time, fireball.countdown):
+            self.ui.activate_hotbar_slot(0, fireball.countdown/1000)
+
+            self.fireballs.add(fireball)
+            self.group.add(fireball)  # pyscroll la gère
+            self.last_shot_time = now
+
+    def handle_trap(self, x, y):
+        now = self.get_now()
+        trap = Trap(x, y)
+        if self.can_place_action(now, self.last_placed_trap, trap.countdown):
+            TAB_ACTION.append(trap)
+            self.ui.activate_hotbar_slot(1, trap.countdown/1000)
+            self.group.add(trap)
+            self.last_placed_trap = now
+            self.score += 10
+
+    def handle_action(self, pressed):
+        #Ajouter les autres actions
+        # faire changer le countdown via cette fonction
+
+        x = self.player.position[0]
+        y = self.player.position[1]
+
+        if pressed[pygame.K_SPACE]: # fireBall
+           self.handle_fireballs()
+        elif pressed[pygame.K_g]:
+            self.handle_trap(x, y)
+        elif pressed[pygame.K_h]:
+            self.ui.activate_hotbar_slot(2, 20)
+        elif pressed[pygame.K_j]:
+            self.ui.activate_hotbar_slot(3, 45)
+        elif pressed[pygame.K_o]:
+            self.ui.start_stun(2.5)
+        elif pressed[pygame.K_SPACE]:
+            # Déléguer la gestion du dialogue au GameManager
+            self.handle_dialogue()
+
+    def handle_input(self):
+        pressed = pygame.key.get_pressed()
+
+        self.handle_movent(pressed)
+        self.handle_collision()
+        self.handle_action(pressed)
+
+
+
 
 
     def handle_dialogue(self):
