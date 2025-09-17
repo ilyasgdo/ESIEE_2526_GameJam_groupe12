@@ -23,6 +23,74 @@ GRAY = (50, 50, 50)
 BLUE = (0, 120, 255)
 RED = (200, 50, 50)
 
+# Variables globales pour la musique
+music_enabled = True
+music_initialized = False
+
+def init_menu_music():
+    """Initialise et lance la musique du menu"""
+    global music_initialized
+    if not music_initialized:
+        try:
+            pygame.mixer.music.load("assets/musics/full-house.ogg")
+            pygame.mixer.music.set_volume(0.3)  # Volume à 30%
+            pygame.mixer.music.play(-1)  # -1 pour boucle infinie
+            music_initialized = True
+        except pygame.error:
+            print("Impossible de charger la musique du menu")
+
+def toggle_music():
+    """Active/désactive la musique"""
+    global music_enabled
+    music_enabled = not music_enabled
+    if music_enabled:
+        pygame.mixer.music.unpause()
+    else:
+        pygame.mixer.music.pause()
+
+
+def draw_volume_button(screen, font):
+    """Dessine le bouton de volume en bas à droite"""
+    button_size = 40
+    margin = 20
+    button_rect = pygame.Rect(
+        SCREEN_WIDTH - button_size - margin,
+        SCREEN_HEIGHT - button_size - margin,
+        button_size,
+        button_size
+    )
+
+    mouse_pos = pygame.mouse.get_pos()
+    is_hovered = button_rect.collidepoint(mouse_pos)
+
+    # Couleur du bouton selon l'état
+    if is_hovered:
+        button_color = (100, 100, 100)
+    else:
+        button_color = (70, 70, 70)
+
+    # Dessiner le bouton
+    pygame.draw.rect(screen, button_color, button_rect, border_radius=5)
+    pygame.draw.rect(screen, WHITE, button_rect, width=2, border_radius=5)
+
+    # Icône de volume (texte simple)
+    volume_text = "🔊" if music_enabled else "🔇"
+    try:
+        # Essayer d'utiliser une police système qui supporte les emojis
+        emoji_font = pygame.font.SysFont("segoe ui emoji", 20)
+        volume_surface = emoji_font.render(volume_text, True, WHITE)
+    except:
+        # Fallback vers du texte simple
+        volume_text = "ON" if music_enabled else "OFF"
+        volume_surface = font.render(volume_text, True, WHITE)
+
+    # Centrer l'icône dans le bouton
+    text_x = button_rect.x + button_rect.width // 2 - volume_surface.get_width() // 2
+    text_y = button_rect.y + button_rect.height // 2 - volume_surface.get_height() // 2
+    screen.blit(volume_surface, (text_x, text_y))
+
+    return button_rect
+
 
 def draw_menu(screen, font, play_button, quit_button):
     """Affiche l'écran du menu principal"""
@@ -57,7 +125,9 @@ def draw_menu(screen, font, play_button, quit_button):
 
     # Vérifier si la souris est sur un bouton pour le curseur
     mouse_pos = pygame.mouse.get_pos()
-    is_hovering = play_button.collidepoint(mouse_pos) or quit_button.collidepoint(mouse_pos)
+    volume_button = draw_volume_button(screen, credits_font)
+    is_hovering = play_button.collidepoint(mouse_pos) or quit_button.collidepoint(
+        mouse_pos) or volume_button.collidepoint(mouse_pos)
 
     if is_hovering:
         pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
@@ -106,19 +176,21 @@ def draw_menu(screen, font, play_button, quit_button):
     screen.blit(credits_surface, (credits_x, credits_y))
 
     pygame.display.flip()
-
-
+    return volume_button
 
 
 def main_menu(screen):
     """Boucle du menu principal"""
+    # Initialiser la musique du menu
+    init_menu_music()
+
     font = pygame.font.SysFont("arial", 40)
     play_button = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 - 60, 200, 60)
     quit_button = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 + 20, 200, 60)
 
     running = True
     while running:
-        draw_menu(screen, font, play_button, quit_button)
+        volume_button = draw_menu(screen, font, play_button, quit_button)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -126,10 +198,13 @@ def main_menu(screen):
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if play_button.collidepoint(event.pos):
-                    return True   # Jouer
+                    pygame.mixer.music.stop()  # Arrêter la musique du menu
+                    return True  # Jouer
                 if quit_button.collidepoint(event.pos):
                     pygame.quit()
                     sys.exit()
+                if volume_button.collidepoint(event.pos):
+                    toggle_music()
     return False
 
 
@@ -137,6 +212,7 @@ def main():
     """Point d'entrée principal du jeu"""
     # Initialisation de pygame
     pygame.init()
+    pygame.mixer.init()  # Initialiser le mixer pour la musique
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Bro thinks he's the main character 💀 - GameJam Groupe 12")
 
@@ -150,8 +226,7 @@ def main():
     game_manager = GameManager(screen)
 
     game_manager.dialogue_manager.start_scene("scene_intro")
-    
-        
+
     running = True
     while running:
         for event in pygame.event.get():
@@ -180,11 +255,11 @@ def main():
                     # Logger la position du joueur
                     player_pos = game_manager.player.position
                     print(f"Position du joueur: x={player_pos[0]:.2f}, y={player_pos[1]:.2f}")
-        
+
         if not game_manager.dialogue_manager.is_active():
             # Gestion des touches en continu
             game_manager.handle_input()
-        
+
         # Mise à jour du jeu
         game_manager.update()
         # Rendu
