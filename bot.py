@@ -10,7 +10,7 @@ class Bot(pygame.sprite.Sprite):
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [float(x), float(y)]
         self.old_position = self.position.copy()  # Pour la gestion des collisions
-        self.speed = 2  # Légèrement plus lent que le joueur
+        self.speed = 79  # Légèrement plus lent que le joueur
         self.frame_index = 0
         self.animation_speed = 0.15
         self.current_direction = 'down'
@@ -18,17 +18,89 @@ class Bot(pygame.sprite.Sprite):
         # Référence au bot allié à suivre (au lieu du joueur)
         self.ally_bot = ally_bot
         
-        # Système de checkpoints
+        # Système de checkpoints - Nouvelle liste de positions du joueur
         self.checkpoints = [
-            (957.67, 6275.67),
-            (957.67, 6083.67),
-            (957.67, 5955.67),
-            (582.67, 6071.67),
-            (594.67, 5978.67),
-            (261.67, 5978.67),
-            (261.67, 5603.67),
-            (546.67, 5393.67),
-            (861.67, 5462.67)
+            (624.67, 6317.67),
+            (789.67, 6317.67),
+            (921.67, 6317.67),
+            (954.67, 6317.67),
+            (954.67, 6035.67),
+            (873.67, 5999.67),
+            (873.67, 6041.67),
+            (813.67, 6071.67),
+            (687.67, 6071.67),
+            (606.67, 6071.67),
+            (606.67, 5999.67),
+            (552.67, 5999.67),
+            (507.67, 5942.67),
+            (360.67, 5942.67),
+            (270.67, 5870.67),
+            (225.67, 5756.67),
+            (258.67, 5636.67),
+            (336.67, 5567.67),
+            (432.67, 5489.67),
+            (552.67, 5456.67),
+            (663.67, 5456.67),
+            (804.67, 5456.67),
+            (927.67, 5456.67),
+            (972.67, 5381.67),
+            (1083.67, 5330.67),
+            (1083.67, 5165.67),
+            (993.67, 5033.67),
+            (915.67, 4958.67),
+            (762.67, 4934.67),
+            (672.67, 4889.67),
+            (621.67, 4811.67),
+            (522.67, 4745.67),
+            (411.67, 4616.67),
+            (333.67, 4532.67),
+            (333.67, 4361.67),
+            (333.67, 4190.67),
+            (291.67, 4067.67),
+            (291.67, 3983.67),
+            (291.67, 3914.67),
+            (408.67, 3914.67),
+            (510.67, 3863.67),
+            (609.67, 3863.67),
+            (702.67, 3863.67),
+            (702.67, 3911.67),
+            (846.67, 3911.67),
+            (990.67, 3911.67),
+            (1044.67, 3911.67),
+            (1092.67, 3761.67),
+            (984.67, 3629.67),
+            (882.67, 3566.67),
+            (795.67, 3536.67),
+            (669.67, 3536.67),
+            (483.67, 3536.67),
+            (363.67, 3500.67),
+            (297.67, 3440.67),
+            (258.67, 3311.67),
+            (339.67, 3197.67),
+            (468.67, 3101.67),
+            (606.67, 3023.67),
+            (681.67, 2915.67),
+            (681.67, 2777.67),
+            (639.67, 2585.67),
+            (603.67, 2408.67),
+            (603.67, 2234.67),
+            (561.67, 2069.67),
+            (363.67, 1994.67),
+            (264.67, 1859.67),
+            (264.67, 1748.67),
+            (354.67, 1748.67),
+            (432.67, 1631.67),
+            (561.67, 1565.67),
+            (624.67, 1481.67),
+            (624.67, 1367.67),
+            (624.67, 1220.67),
+            (876.67, 1028.67),
+            (933.67, 908.67),
+            (858.67, 824.67),
+            (612.67, 791.67),
+            (612.67, 650.67),
+            (612.67, 440.67),
+            (612.67, 323.67)
         ]
         self.current_checkpoint_index = 0
         self.checkpoint_reached_distance = 50  # Distance pour considérer qu'un checkpoint est atteint
@@ -36,9 +108,9 @@ class Bot(pygame.sprite.Sprite):
         
         # Variables pour l'IA de suivi et rotation (gardées pour compatibilité)
         self.follow_distance = 80  # Distance à maintenir avec le bot allié
-        self.orbit_radius = 60     # Rayon de l'orbite autour du bot allié
+        self.orbit_radius = 45     # Rayon de l'orbite autour du bot allié (réduit pour plus de proximité)
         self.orbit_angle = random.uniform(0, 2 * math.pi)  # Angle initial aléatoire
-        self.orbit_speed = 0.02    # Vitesse de rotation autour du bot allié
+        self.orbit_speed = 0.04    # Vitesse de rotation autour du bot allié (augmentée pour plus de dynamisme)
         self.state_timer = 0
         self.state_change_interval = 180  # Changer d'état toutes les 3 secondes (60 FPS)
         
@@ -47,8 +119,8 @@ class Bot(pygame.sprite.Sprite):
         self.target_y = y
         self.velocity_x = 0
         self.velocity_y = 0
-        self.acceleration = 0.3
-        self.friction = 0.85
+        self.acceleration = 1.5  # Augmenté de 0.3 à 1.5
+        self.friction = 0.95     # Augmenté de 0.85 à 0.95 (moins de friction)
         
         # Variables pour des mouvements plus naturels
         self.micro_movement_timer = 0
@@ -167,6 +239,21 @@ class Bot(pygame.sprite.Sprite):
 
     def update_ai(self):
         """Mise à jour de l'intelligence artificielle du bot"""
+        # Vérifier d'abord la proximité avec l'ally bot
+        distance_to_ally = self.get_distance_to_ally()
+        
+        # Si l'ally bot est proche (moins de 100 pixels), passer en mode orbite
+        if distance_to_ally < 100 and self.ally_bot:
+            if self.state != "orbiting":
+                self.state = "orbiting"
+                self.orbit_angle = self.get_angle_to_ally()
+                self.state_timer = 0
+        # Si l'ally bot est loin (plus de 150 pixels), retourner au suivi des checkpoints
+        elif distance_to_ally > 150 or not self.ally_bot:
+            if self.state != "checkpoint_following":
+                self.state = "checkpoint_following"
+                self.state_timer = 0
+        
         if self.state == "checkpoint_following":
             # Vérifier si tous les checkpoints ont été atteints
             if self.current_checkpoint_index >= len(self.checkpoints):
@@ -186,46 +273,19 @@ class Bot(pygame.sprite.Sprite):
                 self.target_x = current_checkpoint[0]
                 self.target_y = current_checkpoint[1]
         
+        elif self.state == "orbiting":
+            # Comportement d'orbite autour du bot allié
+            self.orbit_angle += self.orbit_speed
+            if self.orbit_angle > 2 * math.pi:
+                self.orbit_angle -= 2 * math.pi
+            
+            ally_pos = self.ally_bot.get_position()
+            self.target_x = ally_pos[0] + math.cos(self.orbit_angle) * self.orbit_radius
+            self.target_y = ally_pos[1] + math.sin(self.orbit_angle) * self.orbit_radius
+        
         else:
-            # Ancien comportement de suivi de l'ally bot (gardé pour compatibilité)
-            self.state_timer += 1
-            
-            # Changer d'état périodiquement
-            if self.state_timer >= self.state_change_interval:
-                self.state_timer = 0
-                if self.state == "following":
-                    self.state = "orbiting"
-                    # Calculer l'angle initial pour l'orbite
-                    self.orbit_angle = self.get_angle_to_ally()
-                else:
-                    self.state = "following"
-            
-            distance_to_ally = self.get_distance_to_ally()
-            
-            if self.state == "following":
-                # Comportement de suivi du bot allié
-                if distance_to_ally > self.follow_distance:
-                    # Se rapprocher du bot allié
-                    angle = self.get_angle_to_ally()
-                    ally_pos = self.ally_bot.get_position()
-                    self.target_x = ally_pos[0] - math.cos(angle) * (self.follow_distance * 0.8)
-                    self.target_y = ally_pos[1] - math.sin(angle) * (self.follow_distance * 0.8)
-                else:
-                    # Rester à distance du bot allié
-                    angle = self.get_angle_to_ally()
-                    ally_pos = self.ally_bot.get_position()
-                    self.target_x = ally_pos[0] - math.cos(angle) * self.follow_distance
-                    self.target_y = ally_pos[1] - math.sin(angle) * self.follow_distance
-                    
-            elif self.state == "orbiting":
-                # Comportement d'orbite autour du bot allié
-                self.orbit_angle += self.orbit_speed
-                if self.orbit_angle > 2 * math.pi:
-                    self.orbit_angle -= 2 * math.pi
-                
-                ally_pos = self.ally_bot.get_position()
-                self.target_x = ally_pos[0] + math.cos(self.orbit_angle) * self.orbit_radius
-                self.target_y = ally_pos[1] + math.sin(self.orbit_angle) * self.orbit_radius
+            # Ancien comportement de suivi de l'ally bot (gardé pour compatibilité si nécessaire)
+            pass
 
     def update_movement(self):
         """Mise à jour du mouvement fluide vers la cible avec des comportements naturels"""
@@ -270,13 +330,13 @@ class Bot(pygame.sprite.Sprite):
             self.natural_speed_variation = 0.4 + random.uniform(0, 0.3)
         else:
             # Variation naturelle de la vitesse
-            base_variation = 0.8 + random.uniform(0, 0.4)
+            base_variation = 1.0 + random.uniform(0, 0.2)  # Augmenté de 0.8-1.2 à 1.0-1.2
             # Ajuster selon la distance (plus loin = plus rapide)
-            distance_factor = min(1.1, 0.9 + distance_to_target * 0.005)
+            distance_factor = min(1.3, 1.0 + distance_to_target * 0.008)  # Augmenté les facteurs
             self.natural_speed_variation = base_variation * distance_factor
         
         # Appliquer l'accélération vers la cible avec transition douce
-        acceleration_factor = self.acceleration * 0.01 * self.natural_speed_variation
+        acceleration_factor = self.acceleration * 0.05 * self.natural_speed_variation  # Augmenté de 0.01 à 0.05
         target_velocity_x = dx * acceleration_factor
         target_velocity_y = dy * acceleration_factor
         
@@ -286,7 +346,7 @@ class Bot(pygame.sprite.Sprite):
         self.velocity_y += (target_velocity_y - self.velocity_y) * transition_speed
         
         # Limiter la vitesse maximale avec variation naturelle
-        current_max_speed = self.speed * (0.85 + random.uniform(0, 0.3))
+        current_max_speed = self.speed * (1.0 + random.uniform(0, 0.2))  # Augmenté de 0.85-1.15 à 1.0-1.2
         speed = math.sqrt(self.velocity_x * self.velocity_x + self.velocity_y * self.velocity_y)
         if speed > current_max_speed:
             self.velocity_x = (self.velocity_x / speed) * current_max_speed

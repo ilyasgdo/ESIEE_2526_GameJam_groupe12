@@ -14,7 +14,7 @@ from intro import Intro
 # Configuration de base
 SCREEN_WIDTH = 1024
 SCREEN_HEIGHT = 768
-FPS = 100
+FPS = 200
 
 # Couleurs
 WHITE = (255, 255, 255)
