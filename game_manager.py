@@ -35,9 +35,9 @@ class GameManager:
 
         self.group.add(self.player)
         
-        # Créer le bot qui suit le joueur
-        bot_spawn_x = player_position.x + 50  # Spawn à côté du joueur
-        bot_spawn_y = player_position.y + 50
+        # Créer le bot qui suit le joueur - spawn en bas à gauche de la carte
+        bot_spawn_x = 100  # Position proche du bord gauche
+        bot_spawn_y = (self.tmx_data.height * self.tmx_data.tileheight) - 100  # Position proche du bord bas
         self.bot = Bot(bot_spawn_x, bot_spawn_y, self.player)
         self.group.add(self.bot)
         
