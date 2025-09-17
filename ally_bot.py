@@ -10,7 +10,7 @@ class AllyBot(pygame.sprite.Sprite):
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [float(x), float(y)]
         self.old_position = self.position.copy()  # Pour la gestion des collisions
-        self.speed = 2.5  # Vitesse de déplacement
+        self.speed = 7  # Vitesse de déplacement
         self.frame_index = 0
         self.animation_speed = 1
         self.current_direction = 'down'
@@ -89,7 +89,7 @@ class AllyBot(pygame.sprite.Sprite):
         self.target_y = y
         self.velocity_x = 0
         self.velocity_y = 0
-        self.acceleration = 0.35
+        self.acceleration = 2
         self.friction = 0.88
         
         # Variables pour des mouvements plus naturels et réactifs

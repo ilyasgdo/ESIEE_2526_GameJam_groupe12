@@ -10,7 +10,7 @@ class Bot(pygame.sprite.Sprite):
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [float(x), float(y)]
         self.old_position = self.position.copy()  # Pour la gestion des collisions
-        self.speed = 3  # Légèrement plus lent que le joueur
+        self.speed = 3 # Légèrement plus lent que le joueur
         self.frame_index = 0
         self.animation_speed = 0.15
         self.current_direction = 'down'
@@ -114,12 +114,18 @@ class Bot(pygame.sprite.Sprite):
         self.state_timer = 0
         self.state_change_interval = 180  # Changer d'état toutes les 3 secondes (60 FPS)
         
+        # Nouveaux timers pour le comportement temporisé
+        self.orbit_duration = 600  # 10 secondes à 60 FPS (10 * 60)
+        self.wait_duration = 600   # 10 secondes d'attente à 60 FPS (10 * 60)
+        self.orbit_timer = 0       # Timer pour compter le temps d'orbite
+        self.wait_timer = 0        # Timer pour compter le temps d'attente
+        
         # Variables pour mouvement fluide
         self.target_x = x
         self.target_y = y
         self.velocity_x = 0
         self.velocity_y = 0
-        self.acceleration = 1.5  # Augmenté de 0.3 à 1.5
+        self.acceleration = 0.75  # Augmenté de 0.3 à 1.5
         self.friction = 0.95     # Augmenté de 0.85 à 0.95 (moins de friction)
         
         # Variables pour des mouvements plus naturels
@@ -244,15 +250,16 @@ class Bot(pygame.sprite.Sprite):
         
         # Si l'ally bot est proche (moins de 100 pixels), passer en mode orbite
         if distance_to_ally < 100 and self.ally_bot:
-            if self.state != "orbiting":
+            if self.state != "orbiting" and self.state != "waiting":
                 self.state = "orbiting"
                 self.orbit_angle = self.get_angle_to_ally()
-                self.state_timer = 0
+                self.orbit_timer = 0  # Réinitialiser le timer d'orbite
         # Si l'ally bot est loin (plus de 150 pixels), retourner au suivi des checkpoints
         elif distance_to_ally > 150 or not self.ally_bot:
             if self.state != "checkpoint_following":
                 self.state = "checkpoint_following"
-                self.state_timer = 0
+                self.orbit_timer = 0
+                self.wait_timer = 0
         
         if self.state == "checkpoint_following":
             # Vérifier si tous les checkpoints ont été atteints
@@ -274,14 +281,42 @@ class Bot(pygame.sprite.Sprite):
                 self.target_y = current_checkpoint[1]
         
         elif self.state == "orbiting":
-            # Comportement d'orbite autour du bot allié
-            self.orbit_angle += self.orbit_speed
-            if self.orbit_angle > 2 * math.pi:
-                self.orbit_angle -= 2 * math.pi
+            # Comportement d'orbite autour du bot allié avec timer
+            self.orbit_timer += 1
             
-            ally_pos = self.ally_bot.get_position()
-            self.target_x = ally_pos[0] + math.cos(self.orbit_angle) * self.orbit_radius
-            self.target_y = ally_pos[1] + math.sin(self.orbit_angle) * self.orbit_radius
+            # Si on a orbitté pendant 10 secondes, passer en mode attente
+            if self.orbit_timer >= self.orbit_duration:
+                self.state = "waiting"
+                self.wait_timer = 0
+                # Arrêter le mouvement pendant l'attente
+                self.target_x = self.rect.centerx
+                self.target_y = self.rect.centery
+            else:
+                # Continuer l'orbite
+                self.orbit_angle += self.orbit_speed
+                if self.orbit_angle > 2 * math.pi:
+                    self.orbit_angle -= 2 * math.pi
+                
+                ally_pos = self.ally_bot.get_position()
+                self.target_x = ally_pos[0] + math.cos(self.orbit_angle) * self.orbit_radius
+                self.target_y = ally_pos[1] + math.sin(self.orbit_angle) * self.orbit_radius
+        
+        elif self.state == "waiting":
+            # État d'attente de 10 secondes
+            self.wait_timer += 1
+            
+            # Rester immobile pendant l'attente
+            self.target_x = self.rect.centerx
+            self.target_y = self.rect.centery
+            
+            # Si on a attendu 10 secondes, retourner au suivi des checkpoints
+            if self.wait_timer >= self.wait_duration:
+                self.state = "checkpoint_following"
+                self.orbit_timer = 0
+                self.wait_timer = 0
+                
+                # Retourner à deux checkpoints en arrière
+                self.current_checkpoint_index = max(0, self.current_checkpoint_index - 2)
         
         else:
             # Ancien comportement de suivi de l'ally bot (gardé pour compatibilité si nécessaire)
