@@ -40,13 +40,15 @@ def main():
     # Boucle principale du jeu
     running = True
     while running:
-    # Gestion des événements
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                running = False
-        
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+                elif event.key == pygame.K_SPACE:
+                    # Déléguer la gestion du dialogue au GameManager
+                    game_manager.handle_dialogue()
         # Gestion des touches en continu
         game_manager.handle_input()
         

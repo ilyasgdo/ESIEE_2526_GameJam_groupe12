@@ -9,7 +9,7 @@ import sys
 import os
 import pytmx
 import pyscroll
-
+from dialogue_manager import DialogueManager
 from player import Player
 from bot import Bot
 from ally_bot import AllyBot
@@ -36,6 +36,8 @@ class GameManager:
         self.player = Player(player_position.x, player_position.y)
 
         self.group.add(self.player)
+        self.dialogue_manager = DialogueManager()
+        self.dialogue_manager.load_from_file("assets/dialogues/scenes.json")
         
         # Créer le bot allié qui se déplace vers le haut - spawn près du joueur
         ally_spawn_x = player_position.x + 30  # Spawn près du joueur
@@ -63,7 +65,6 @@ class GameManager:
         self.minimap = Minimap(self.screen, self.tmx_data, x=10, y=10, width=200, height=150)
 
         # centrer la camera sur le joueur
-
 
         pygame.display.flip()
     
@@ -168,6 +169,8 @@ class GameManager:
         """Rendu des entités du jeu"""
         self.group.draw(self.screen)
         
+        self.dialogue_manager.draw(self.screen)
+        
         # Rendre la minimap par-dessus le jeu
         if hasattr(self, 'minimap'):
             self.minimap.render()
@@ -198,3 +201,9 @@ class GameManager:
         if not is_moving:
             self.player.stop()
 
+    def handle_dialogue(self):
+        """Gérer le passage au dialogue suivant ou démarrer un dialogue"""
+        if self.dialogue_manager.is_active:
+            self.dialogue_manager.next_line()
+        else:
+            self.dialogue_manager.start_scene("scene_intro")
