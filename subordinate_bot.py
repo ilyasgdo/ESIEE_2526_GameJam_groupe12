@@ -33,11 +33,31 @@ class SubordinateBot(pygame.sprite.Sprite):
         self.micro_movement_timer = 0
         self.micro_movement_x = 0
         self.micro_movement_y = 0
+        self.breathing_timer = random.uniform(0, math.pi * 2)
         self.hesitation_timer = 0
         self.is_hesitating = False
         self.natural_speed_variation = 1.0
-        self.breathing_timer = 0
         self.last_direction_change = 0
+        
+        # Variables pour mouvement aléatoire autour de l'ally bot
+        self.random_angle_offset = random.uniform(-math.pi/3, math.pi/3)  # Offset aléatoire de l'angle
+        self.random_radius_offset = random.uniform(-20, 20)  # Variation du rayon
+        self.angle_drift_speed = random.uniform(0.005, 0.02)  # Vitesse de dérive de l'angle
+        self.radius_oscillation_timer = random.uniform(0, math.pi * 2)
+        self.radius_oscillation_speed = random.uniform(0.01, 0.03)
+        self.position_change_timer = random.randint(60, 180)  # Timer pour changer de position
+        self.target_angle_offset = self.random_angle_offset
+        
+        # Variables pour suivi de trajectoire de l'ally bot
+        self.leader_previous_position = list(leader.get_position()) if leader else [0, 0]
+        self.leader_velocity = [0, 0]
+        self.trajectory_prediction_factor = 0.3  # Facteur de prédiction de trajectoire
+        self.velocity_smoothing = 0.1  # Lissage de la vélocité du leader
+        
+        # Variables pour cohérence directionnelle avec l'ally bot
+        self.leader_direction_influence = 0.4  # Influence de la direction du leader
+        self.direction_alignment_speed = 0.05  # Vitesse d'alignement directionnel
+        self.preferred_direction_offset = random.uniform(-math.pi/4, math.pi/4)  # Offset préféré par rapport au leader
         
         # Variables pour éviter les collisions entre subordonnés
         self.separation_radius = 25
@@ -90,15 +110,62 @@ class SubordinateBot(pygame.sprite.Sprite):
             self.frame_index = 0
 
     def calculate_formation_position(self):
-        """Calcule la position cible dans la formation autour du leader"""
+        """Calcule la position cible dans la formation autour du leader avec mouvement aléatoire et suivi de trajectoire"""
         if not self.leader:
             return self.position
         
         leader_pos = self.leader.get_position()
         
-        # Calculer la position cible en formation circulaire
-        target_x = leader_pos[0] + math.cos(self.formation_angle) * self.formation_radius
-        target_y = leader_pos[1] + math.sin(self.formation_angle) * self.formation_radius
+        # Calculer la vélocité du leader pour prédire sa trajectoire
+        current_leader_velocity = [
+            leader_pos[0] - self.leader_previous_position[0],
+            leader_pos[1] - self.leader_previous_position[1]
+        ]
+        
+        # Lisser la vélocité du leader pour éviter les changements brusques
+        self.leader_velocity[0] += (current_leader_velocity[0] - self.leader_velocity[0]) * self.velocity_smoothing
+        self.leader_velocity[1] += (current_leader_velocity[1] - self.leader_velocity[1]) * self.velocity_smoothing
+        
+        # Prédire la position future du leader basée sur sa trajectoire
+        predicted_leader_x = leader_pos[0] + self.leader_velocity[0] * self.trajectory_prediction_factor * 10
+        predicted_leader_y = leader_pos[1] + self.leader_velocity[1] * self.trajectory_prediction_factor * 10
+        
+        # Mettre à jour la position précédente du leader
+        self.leader_previous_position = list(leader_pos)
+        
+        # Mettre à jour le timer pour changer de position aléatoirement
+        self.position_change_timer -= 1
+        if self.position_change_timer <= 0:
+            # Changer vers une nouvelle position aléatoire
+            self.target_angle_offset = random.uniform(-math.pi/2, math.pi/2)
+            self.random_radius_offset = random.uniform(-25, 25)
+            self.position_change_timer = random.randint(120, 300)  # 2-5 secondes à 60 FPS
+        
+        # Transition douce vers le nouvel angle cible
+        angle_diff = self.target_angle_offset - self.random_angle_offset
+        if abs(angle_diff) > math.pi:
+            if angle_diff > 0:
+                angle_diff -= 2 * math.pi
+            else:
+                angle_diff += 2 * math.pi
+        
+        self.random_angle_offset += angle_diff * 0.02  # Transition douce
+        
+        # Dérive continue de l'angle pour un mouvement plus naturel
+        self.random_angle_offset += self.angle_drift_speed * random.uniform(-1, 1)
+        
+        # Oscillation du rayon pour un mouvement plus dynamique
+        self.radius_oscillation_timer += self.radius_oscillation_speed
+        radius_oscillation = math.sin(self.radius_oscillation_timer) * 8
+        
+        # Calculer l'angle final avec l'offset aléatoire
+        final_angle = self.formation_angle + self.random_angle_offset
+        final_radius = self.formation_radius + self.random_radius_offset + radius_oscillation
+        
+        # Calculer la position cible avec le mouvement aléatoire et le suivi de trajectoire
+        # Utiliser la position prédite du leader au lieu de sa position actuelle
+        target_x = predicted_leader_x + math.cos(final_angle) * final_radius
+        target_y = predicted_leader_y + math.sin(final_angle) * final_radius
         
         return [target_x, target_y]
 
@@ -130,6 +197,34 @@ class SubordinateBot(pygame.sprite.Sprite):
         dx = adjusted_target_x - self.position[0]
         dy = adjusted_target_y - self.position[1]
         distance_to_target = math.sqrt(dx*dx + dy*dy)
+        
+        # Cohérence directionnelle avec l'ally bot
+        leader_direction = 0
+        if abs(self.leader_velocity[0]) > 0.1 or abs(self.leader_velocity[1]) > 0.1:
+            # Calculer la direction du leader basée sur sa vélocité
+            leader_direction = math.atan2(self.leader_velocity[1], self.leader_velocity[0])
+            
+            # Ajuster la direction cible pour être cohérente avec le leader
+            target_direction = math.atan2(dy, dx)
+            
+            # Calculer la direction préférée (direction du leader + offset personnel)
+            preferred_direction = leader_direction + self.preferred_direction_offset
+            
+            # Mélanger la direction vers la cible avec la direction préférée
+            direction_diff = preferred_direction - target_direction
+            if abs(direction_diff) > math.pi:
+                if direction_diff > 0:
+                    direction_diff -= 2 * math.pi
+                else:
+                    direction_diff += 2 * math.pi
+            
+            # Appliquer l'influence directionnelle du leader
+            adjusted_direction = target_direction + direction_diff * self.leader_direction_influence
+            
+            # Recalculer dx et dy avec la direction ajustée
+            if distance_to_target > 0:
+                dx = math.cos(adjusted_direction) * distance_to_target
+                dy = math.sin(adjusted_direction) * distance_to_target
         
         # Hésitation occasionnelle quand on change de direction significativement
         if distance_to_target > 5:
