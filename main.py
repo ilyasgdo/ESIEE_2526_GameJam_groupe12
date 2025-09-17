@@ -25,28 +25,89 @@ RED = (200, 50, 50)
 
 
 def draw_menu(screen, font, play_button, quit_button):
-    """Affiche l’écran du menu principal"""
-    screen.fill(GRAY)
-    title = font.render("Bro thinks he's the main character", True, WHITE)
-    screen.blit(title, (SCREEN_WIDTH // 2 - title.get_width() // 2, SCREEN_HEIGHT // 4))
-    skull_img = pygame.image.load("assets/images/skull.png").convert_alpha()
-    skull_img = pygame.transform.scale(skull_img, (64, 64))  
+    """Affiche l'écran du menu principal"""
+    # Background
+    try:
+        background_img = pygame.image.load("assets/images/background.png").convert()
+        background_img = pygame.transform.scale(background_img, (SCREEN_WIDTH, SCREEN_HEIGHT))
+        screen.blit(background_img, (0, 0))
+    except:
+        screen.fill(GRAY)  # Fallback si l'image n'existe pas
 
-    # Dans draw_menu()
-    screen.blit(skull_img, (SCREEN_WIDTH//2 - 32, SCREEN_HEIGHT//4 - 80))
-    # Bouton Jouer
-    pygame.draw.rect(screen, BLUE, play_button)
-    play_text = font.render("Jouer", True, WHITE)
-    screen.blit(play_text, (play_button.x + play_button.width // 2 - play_text.get_width() // 2,
-                            play_button.y + 10))
+    # Logo au lieu du titre
+    try:
+        logo_img = pygame.image.load("assets/images/bthtmc_logo.png").convert_alpha()
+        # Redimensionner le logo (ajustez la taille selon vos besoins)
+        logo_img = pygame.transform.scale(logo_img, (800, 250))
+        logo_x = SCREEN_WIDTH // 2 - logo_img.get_width() // 2
+        logo_y = SCREEN_HEIGHT // 4 - logo_img.get_height() // 2
+        screen.blit(logo_img, (logo_x, logo_y))
+    except:
+        # Fallback au titre original si le logo n'existe pas
+        title = font.render("Bro thinks he's the main character", True, WHITE)
+        screen.blit(title, (SCREEN_WIDTH // 2 - title.get_width() // 2, SCREEN_HEIGHT // 4))
 
-    # Bouton Quitter
-    pygame.draw.rect(screen, RED, quit_button)
-    quit_text = font.render("Quitter", True, WHITE)
-    screen.blit(quit_text, (quit_button.x + quit_button.width // 2 - quit_text.get_width() // 2,
-                            quit_button.y + 10))
+    # Police personnalisée pour les boutons
+    try:
+        button_font = pygame.font.Font("assets/fonts/londrina.ttf", 40)
+        credits_font = pygame.font.Font("assets/fonts/londrina.ttf", 24)
+    except:
+        button_font = font  # Fallback à la police par défaut
+        credits_font = font
+
+    # Vérifier si la souris est sur un bouton pour le curseur
+    mouse_pos = pygame.mouse.get_pos()
+    is_hovering = play_button.collidepoint(mouse_pos) or quit_button.collidepoint(mouse_pos)
+
+    if is_hovering:
+        pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+    else:
+        pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+
+    # Style amélioré pour les boutons
+    def draw_styled_button(rect, text, base_color, hover_color, text_color):
+        is_hovered = rect.collidepoint(mouse_pos)
+        color = hover_color if is_hovered else base_color
+
+        # Ombre du bouton
+        shadow_rect = pygame.Rect(rect.x + 3, rect.y + 3, rect.width, rect.height)
+        pygame.draw.rect(screen, (0, 0, 0, 100), shadow_rect, border_radius=10)
+
+        # Bouton principal
+        pygame.draw.rect(screen, color, rect, border_radius=10)
+
+        # Bordure
+        border_color = (255, 255, 255, 150) if is_hovered else (200, 200, 200, 100)
+        pygame.draw.rect(screen, border_color, rect, width=2, border_radius=10)
+
+        # Texte centré avec la police Londrina
+        text_surface = button_font.render(text, True, text_color)
+        text_x = rect.x + rect.width // 2 - text_surface.get_width() // 2
+        text_y = rect.y + rect.height // 2 - text_surface.get_height() // 2
+        screen.blit(text_surface, (text_x, text_y))
+
+    # Nouvelles couleurs
+    BLUE_BUTTON = (170, 170, 197)  # #AAAAC5
+    BLUE_BUTTON_HOVER = (190, 190, 217)  # Version plus claire pour le hover
+    PURPLE_BUTTON = (54, 40, 43)  # #36282B
+    PURPLE_BUTTON_HOVER = (74, 60, 63)  # Version plus claire pour le hover
+
+    # Bouton Jouer avec les nouvelles couleurs
+    draw_styled_button(play_button, "Jouer", BLUE_BUTTON, BLUE_BUTTON_HOVER, WHITE)
+
+    # Bouton Quitter avec les nouvelles couleurs
+    draw_styled_button(quit_button, "Quitter", PURPLE_BUTTON, PURPLE_BUTTON_HOVER, WHITE)
+
+    # Texte des créateurs en bas
+    credits_text = "Clément GUERIN - Gabriel MINGOTAUD - Richard HO - Ilyas GHANDAOUI - Léo DESSERTENNE"
+    credits_surface = credits_font.render(credits_text, True, WHITE)
+    credits_x = SCREEN_WIDTH // 2 - credits_surface.get_width() // 2
+    credits_y = SCREEN_HEIGHT - 40  # 40 pixels du bas
+    screen.blit(credits_surface, (credits_x, credits_y))
 
     pygame.display.flip()
+
+
 
 
 def main_menu(screen):
