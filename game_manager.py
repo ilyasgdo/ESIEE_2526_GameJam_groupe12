@@ -144,12 +144,14 @@ class GameManager:
         # Mettre à jour la minimap avec les positions des entités
         if hasattr(self, 'minimap') and self.minimap:
             self.minimap.update_player_position(self.player.position[0], self.player.position[1])
-            self.minimap.update_bot_position(self.bot.position[0], self.bot.position[1])
             self.minimap.update_ally_position(self.ally_bot.position[0], self.ally_bot.position[1])
             
             # Mettre à jour les positions des subordonnés
             if hasattr(self, 'formation_manager'):
                 self.minimap.update_subordinates_positions(self.formation_manager.get_subordinates())
+            
+            # Appeler la méthode update pour rafraîchir l'affichage
+            self.minimap.update()
 
 
     def render(self):

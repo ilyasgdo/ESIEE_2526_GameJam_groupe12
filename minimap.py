@@ -120,8 +120,9 @@ class Minimap:
         self.player_pos = (x, y)
     
     def update_bot_position(self, x, y):
-        """Met à jour la position du bot"""
-        self.bot_pos = (x, y)
+        """Met à jour la position du bot (méthode conservée pour compatibilité)"""
+        # Cette méthode est conservée pour éviter les erreurs mais n'est plus utilisée
+        pass
     
     def update_ally_position(self, x, y):
         """Met à jour la position du bot allié"""
@@ -154,11 +155,6 @@ class Minimap:
         self.surface.blit(overlay, (0, 0))
         
         # Dessiner les entités en utilisant les positions stockées ou les objets passés
-        if hasattr(self, 'bot_pos') or bot:
-            bot_x, bot_y = self.bot_pos if hasattr(self, 'bot_pos') else bot.position
-            self.draw_entity(self.surface, bot_x, bot_y, 
-                           self.bot_color, size=4, shape='square')
-        
         if hasattr(self, 'ally_pos') or ally_bot:
             ally_x, ally_y = self.ally_pos if hasattr(self, 'ally_pos') else ally_bot.position
             self.draw_entity(self.surface, ally_x, ally_y, 
@@ -170,6 +166,7 @@ class Minimap:
                 self.draw_entity(self.surface, sub_pos[0], sub_pos[1], 
                                self.subordinate_color, size=3, shape='circle')
         
+        # Dessiner le joueur en dernier pour qu'il soit au-dessus
         if hasattr(self, 'player_pos') or player:
             player_x, player_y = self.player_pos if hasattr(self, 'player_pos') else player.position
             self.draw_entity(self.surface, player_x, player_y, 
@@ -177,6 +174,9 @@ class Minimap:
     
     def render(self):
         """Rend la minimap sur l'écran principal"""
+        # Mettre à jour l'affichage avant le rendu pour s'assurer que tout est à jour
+        self.update()
+        
         # Dessiner la bordure
         border_rect = pygame.Rect(self.x - 2, self.y - 2, self.width + 4, self.height + 4)
         pygame.draw.rect(self.screen, self.border_color, border_rect)
