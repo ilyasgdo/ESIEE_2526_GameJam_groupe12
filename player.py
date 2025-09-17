@@ -1,4 +1,5 @@
 import pygame
+import math
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -10,7 +11,20 @@ class Player(pygame.sprite.Sprite):
         self.frame_index = 0
         self.animation_speed = 0.2
         self.current_direction = 'down'
+<<<<<<< HEAD
         self.last_direction = 'down'  # Pour mémoriser la dernière direction prioritaire
+=======
+        
+        # Référence au bot allié pour la contrainte de distance
+        self.ally_bot = None
+        self.max_distance_from_ally = 150
+        
+        # Système d'attraction automatique
+        self.time_outside_range = 0  # Temps passé hors de portée (en millisecondes)
+        self.max_time_outside = 3000  # 3 secondes avant attraction automatique
+        self.auto_attraction_speed = 2  # Vitesse d'attraction automatique
+        self.is_being_attracted = False  # Flag pour l'attraction en cours  # Distance maximale autorisée
+>>>>>>> de67555 (feat: add ally bot with movement constraints and minimap support)
 
         # Récupérer toutes les frames
         self.animations = {
@@ -40,6 +54,7 @@ class Player(pygame.sprite.Sprite):
             self.current_direction = direction
             self.frame_index = 0
 
+<<<<<<< HEAD
     def determine_animation_direction(self):
         """Détermine quelle animation jouer en cas de mouvement diagonal"""
         # Priorité : horizontal > vertical (vous pouvez ajuster selon vos préférences)
@@ -77,6 +92,60 @@ class Player(pygame.sprite.Sprite):
         """Remet à zéro les flags de mouvement"""
         for direction in self.movement_directions:
             self.movement_directions[direction] = False
+=======
+    def set_ally_bot(self, ally_bot):
+        """Définit le bot allié pour la contrainte de distance"""
+        self.ally_bot = ally_bot
+    
+    def get_distance_to_ally(self):
+        """Calcule la distance au bot allié"""
+        if not self.ally_bot:
+            return 0
+        ally_pos = self.ally_bot.get_position()
+        dx = self.position[0] - ally_pos[0]
+        dy = self.position[1] - ally_pos[1]
+        return math.sqrt(dx*dx + dy*dy)
+    
+    def can_move_to(self, new_x, new_y):
+        """Vérifie si le joueur peut se déplacer à la position donnée sans dépasser la distance limite"""
+        if not self.ally_bot:
+            return True
+        
+        ally_pos = self.ally_bot.get_position()
+        dx = new_x - ally_pos[0]
+        dy = new_y - ally_pos[1]
+        distance = math.sqrt(dx*dx + dy*dy)
+        
+        return distance <= self.max_distance_from_ally
+
+    def move_right(self): 
+        new_x = self.position[0] + self.speed
+        if self.can_move_to(new_x, self.position[1]):
+            self.position[0] = new_x
+            self.change_animation('right')
+            self.is_moving = True
+
+    def move_left(self): 
+        new_x = self.position[0] - self.speed
+        if self.can_move_to(new_x, self.position[1]):
+            self.position[0] = new_x
+            self.change_animation('left')
+            self.is_moving = True
+
+    def move_up(self): 
+        new_y = self.position[1] - self.speed
+        if self.can_move_to(self.position[0], new_y):
+            self.position[1] = new_y
+            self.change_animation('up')
+            self.is_moving = True
+
+    def move_down(self): 
+        new_y = self.position[1] + self.speed
+        if self.can_move_to(self.position[0], new_y):
+            self.position[1] = new_y
+            self.change_animation('down')
+            self.is_moving = True
+>>>>>>> de67555 (feat: add ally bot with movement constraints and minimap support)
         
     def stop(self):
         """Appelé quand aucune touche n'est pressée"""

@@ -12,6 +12,7 @@ import pyscroll
 
 from player import Player
 from bot import Bot
+from ally_bot import AllyBot
 from minimap import Minimap
 
 class GameManager:
@@ -35,10 +36,19 @@ class GameManager:
 
         self.group.add(self.player)
         
+        # Créer le bot allié qui se déplace vers le haut - spawn près du joueur
+        ally_spawn_x = player_position.x + 30  # Spawn près du joueur
+        ally_spawn_y = player_position.y + 30
+        self.ally_bot = AllyBot(ally_spawn_x, ally_spawn_y)
+        self.group.add(self.ally_bot)
+        
+        # Définir la référence au bot allié pour le joueur (contrainte de distance)
+        self.player.set_ally_bot(self.ally_bot)
+        
         # Créer le bot qui suit le joueur - spawn en bas à gauche de la carte
         bot_spawn_x = 100  # Position proche du bord gauche
         bot_spawn_y = (self.tmx_data.height * self.tmx_data.tileheight) - 100  # Position proche du bord bas
-        self.bot = Bot(bot_spawn_x, bot_spawn_y, self.player)
+        self.bot = Bot(bot_spawn_x, bot_spawn_y, self.ally_bot)  # Le bot suit maintenant l'ally_bot
         self.group.add(self.bot)
         
         # Créer la minimap
@@ -119,9 +129,11 @@ class GameManager:
         self.group.update()
         self.group.center(self.player.rect.center)
         
-        # Mettre à jour la minimap avec les positions actuelles
-        if hasattr(self, 'minimap'):
-            self.minimap.update(self.player, self.bot)
+        # Mettre à jour la minimap avec les positions des entités
+        if hasattr(self, 'minimap') and self.minimap:
+            self.minimap.update_player_position(self.player.position[0], self.player.position[1])
+            self.minimap.update_bot_position(self.bot.position[0], self.bot.position[1])
+            self.minimap.update_ally_position(self.ally_bot.position[0], self.ally_bot.position[1])
 
 
     def render(self):

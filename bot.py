@@ -3,7 +3,7 @@ import math
 import random
 
 class Bot(pygame.sprite.Sprite):
-    def __init__(self, x, y, player):
+    def __init__(self, x, y, ally_bot):
         super().__init__()
         # Utiliser le même sprite sheet que le joueur mais avec une couleur différente
         self.sprite_sheet = pygame.image.load('assets/sprites/player/BIRDSPRITESHEET_Blue.png').convert_alpha()
@@ -14,14 +14,14 @@ class Bot(pygame.sprite.Sprite):
         self.animation_speed = 0.15
         self.current_direction = 'down'
         
-        # Référence au joueur à suivre
-        self.player = player
+        # Référence au bot allié à suivre (au lieu du joueur)
+        self.ally_bot = ally_bot
         
         # Variables pour l'IA de suivi et rotation
-        self.follow_distance = 80  # Distance à maintenir avec le joueur
-        self.orbit_radius = 60     # Rayon de l'orbite autour du joueur
+        self.follow_distance = 80  # Distance à maintenir avec le bot allié
+        self.orbit_radius = 60     # Rayon de l'orbite autour du bot allié
         self.orbit_angle = random.uniform(0, 2 * math.pi)  # Angle initial aléatoire
-        self.orbit_speed = 0.02    # Vitesse de rotation autour du joueur
+        self.orbit_speed = 0.02    # Vitesse de rotation autour du bot allié
         self.state = "following"   # États: "following", "orbiting"
         self.state_timer = 0
         self.state_change_interval = 180  # Changer d'état toutes les 3 secondes (60 FPS)
@@ -75,16 +75,22 @@ class Bot(pygame.sprite.Sprite):
             self.current_direction = direction
             self.frame_index = 0
 
-    def get_distance_to_player(self):
-        """Calculer la distance au joueur"""
-        dx = self.player.position[0] - self.position[0]
-        dy = self.player.position[1] - self.position[1]
-        return math.sqrt(dx * dx + dy * dy)
+    def get_distance_to_ally(self):
+        """Calcule la distance au bot allié"""
+        if not self.ally_bot:
+            return float('inf')
+        ally_pos = self.ally_bot.get_position()
+        dx = self.position[0] - ally_pos[0]
+        dy = self.position[1] - ally_pos[1]
+        return math.sqrt(dx*dx + dy*dy)
 
-    def get_angle_to_player(self):
-        """Calculer l'angle vers le joueur"""
-        dx = self.player.position[0] - self.position[0]
-        dy = self.player.position[1] - self.position[1]
+    def get_angle_to_ally(self):
+        """Calcule l'angle vers le bot allié"""
+        if not self.ally_bot:
+            return 0
+        ally_pos = self.ally_bot.get_position()
+        dx = ally_pos[0] - self.position[0]
+        dy = ally_pos[1] - self.position[1]
         return math.atan2(dy, dx)
 
     def update_ai(self):
@@ -97,33 +103,36 @@ class Bot(pygame.sprite.Sprite):
             if self.state == "following":
                 self.state = "orbiting"
                 # Calculer l'angle initial pour l'orbite
-                self.orbit_angle = self.get_angle_to_player()
+                self.orbit_angle = self.get_angle_to_ally()
             else:
                 self.state = "following"
         
-        distance_to_player = self.get_distance_to_player()
+        distance_to_ally = self.get_distance_to_ally()
         
         if self.state == "following":
-            # Comportement de suivi
-            if distance_to_player > self.follow_distance:
-                # Se rapprocher du joueur
-                angle = self.get_angle_to_player()
-                self.target_x = self.player.position[0] - math.cos(angle) * (self.follow_distance * 0.8)
-                self.target_y = self.player.position[1] - math.sin(angle) * (self.follow_distance * 0.8)
+            # Comportement de suivi du bot allié
+            if distance_to_ally > self.follow_distance:
+                # Se rapprocher du bot allié
+                angle = self.get_angle_to_ally()
+                ally_pos = self.ally_bot.get_position()
+                self.target_x = ally_pos[0] - math.cos(angle) * (self.follow_distance * 0.8)
+                self.target_y = ally_pos[1] - math.sin(angle) * (self.follow_distance * 0.8)
             else:
-                # Rester à distance
-                angle = self.get_angle_to_player()
-                self.target_x = self.player.position[0] - math.cos(angle) * self.follow_distance
-                self.target_y = self.player.position[1] - math.sin(angle) * self.follow_distance
+                # Rester à distance du bot allié
+                angle = self.get_angle_to_ally()
+                ally_pos = self.ally_bot.get_position()
+                self.target_x = ally_pos[0] - math.cos(angle) * self.follow_distance
+                self.target_y = ally_pos[1] - math.sin(angle) * self.follow_distance
                 
         elif self.state == "orbiting":
-            # Comportement d'orbite autour du joueur
+            # Comportement d'orbite autour du bot allié
             self.orbit_angle += self.orbit_speed
             if self.orbit_angle > 2 * math.pi:
                 self.orbit_angle -= 2 * math.pi
-                
-            self.target_x = self.player.position[0] + math.cos(self.orbit_angle) * self.orbit_radius
-            self.target_y = self.player.position[1] + math.sin(self.orbit_angle) * self.orbit_radius
+            
+            ally_pos = self.ally_bot.get_position()
+            self.target_x = ally_pos[0] + math.cos(self.orbit_angle) * self.orbit_radius
+            self.target_y = ally_pos[1] + math.sin(self.orbit_angle) * self.orbit_radius
 
     def update_movement(self):
         """Mise à jour du mouvement fluide vers la cible"""

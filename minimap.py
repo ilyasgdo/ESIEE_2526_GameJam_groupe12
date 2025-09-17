@@ -37,6 +37,7 @@ class Minimap:
         self.border_color = (100, 100, 120, 255)  # Bordure
         self.player_color = (0, 255, 0, 255)  # Vert pour le joueur
         self.bot_color = (255, 100, 100, 255)  # Rouge/rose pour le bot
+        self.ally_color = (100, 255, 100, 255)  # Vert clair pour le bot allié
         self.map_color = (80, 80, 90, 255)  # Couleur de base de la carte
         
         # Générer une représentation simplifiée de la carte
@@ -113,13 +114,26 @@ class Minimap:
             pygame.draw.polygon(surface, color, points)
             pygame.draw.polygon(surface, (255, 255, 255, 200), points, 1)
     
-    def update(self, player, bot):
+    def update_player_position(self, x, y):
+        """Met à jour la position du joueur"""
+        self.player_pos = (x, y)
+    
+    def update_bot_position(self, x, y):
+        """Met à jour la position du bot"""
+        self.bot_pos = (x, y)
+    
+    def update_ally_position(self, x, y):
+        """Met à jour la position du bot allié"""
+        self.ally_pos = (x, y)
+
+    def update(self, player=None, bot=None, ally_bot=None):
         """
         Met à jour la minimap avec les positions actuelles des entités
         
         Args:
-            player: Instance du joueur
-            bot: Instance du bot
+            player: Instance du joueur (optionnel)
+            bot: Instance du bot (optionnel)
+            ally_bot: Instance du bot allié (optionnel)
         """
         # Effacer la surface de la minimap
         self.surface.fill((0, 0, 0, 0))  # Transparent
@@ -132,13 +146,20 @@ class Minimap:
         overlay.fill(self.bg_color)
         self.surface.blit(overlay, (0, 0))
         
-        # Dessiner les entités
-        if bot:
-            self.draw_entity(self.surface, bot.position[0], bot.position[1], 
+        # Dessiner les entités en utilisant les positions stockées ou les objets passés
+        if hasattr(self, 'bot_pos') or bot:
+            bot_x, bot_y = self.bot_pos if hasattr(self, 'bot_pos') else bot.position
+            self.draw_entity(self.surface, bot_x, bot_y, 
                            self.bot_color, size=4, shape='square')
         
-        if player:
-            self.draw_entity(self.surface, player.position[0], player.position[1], 
+        if hasattr(self, 'ally_pos') or ally_bot:
+            ally_x, ally_y = self.ally_pos if hasattr(self, 'ally_pos') else ally_bot.position
+            self.draw_entity(self.surface, ally_x, ally_y, 
+                           self.ally_color, size=4, shape='circle')
+        
+        if hasattr(self, 'player_pos') or player:
+            player_x, player_y = self.player_pos if hasattr(self, 'player_pos') else player.position
+            self.draw_entity(self.surface, player_x, player_y, 
                            self.player_color, size=5, shape='triangle')
     
     def render(self):
