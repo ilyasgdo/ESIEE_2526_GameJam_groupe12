@@ -10,7 +10,7 @@ class Bot(pygame.sprite.Sprite):
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [float(x), float(y)]
         self.old_position = self.position.copy()  # Pour la gestion des collisions
-        self.speed = 79  # Légèrement plus lent que le joueur
+        self.speed = 3  # Légèrement plus lent que le joueur
         self.frame_index = 0
         self.animation_speed = 0.15
         self.current_direction = 'down'
