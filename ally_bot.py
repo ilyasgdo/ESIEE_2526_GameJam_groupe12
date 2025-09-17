@@ -18,8 +18,52 @@ class AllyBot(pygame.sprite.Sprite):
         # Référence au joueur (gardée pour la contrainte de distance du joueur)
         self.player = player
         
-        # Variables pour l'IA autonome
-        self.state = "exploring"   # États: "exploring", "wandering"
+        # Système de checkpoints avec les positions fournies
+        self.checkpoints = [
+            (843.67, 6017.67),
+            (594.67, 6077.67),
+            (594.67, 5978.67),
+            (291.67, 5978.67),
+            (234.67, 5750.67),
+            (351.67, 5561.67),
+            (498.67, 5465.67),
+            (996.67, 5465.67),
+            (1077.67, 5294.67),
+            (1077.67, 5096.67),
+            (666.67, 4886.67),
+            (339.67, 4586.67),
+            (261.67, 3977.67),
+            (660.67, 3884.67),
+            (1026.67, 3893.67),
+            (1086.67, 3725.67),
+            (795.67, 3521.67),
+            (369.67, 3470.67),
+            (288.67, 3269.67),
+            (558.67, 3035.67),
+            (678.67, 2675.67),
+            (678.67, 2354.67)
+        ]
+        self.current_checkpoint_index = 0
+        self.checkpoint_reached_distance = 50  # Distance pour considérer qu'un checkpoint est atteint
+        
+        # Variables pour les pauses aux checkpoints
+        self.is_pausing = False
+        self.pause_timer = 0
+        self.pause_duration = 240  # 4 secondes à 60 FPS
+        self.random_movement_timer = 0
+        self.random_movement_interval = 15  # Changer de direction aléatoire toutes les 0.25 secondes
+        self.random_target_x = x
+        self.random_target_y = y
+        
+        # Variables pour la détection de proximité avec le bot principal
+        self.bot_reference = None  # Sera défini plus tard
+        self.proximity_distance = 80  # Distance de proximité avec le bot principal
+        self.is_near_bot = False
+        self.near_bot_timer = 0
+        self.near_bot_movement_timer = 0
+        
+        # Variables pour l'IA autonome (gardées pour compatibilité)
+        self.state = "checkpoint_following"   # Nouvel état pour suivre les checkpoints
         self.state_timer = 0
         self.state_change_interval = 180  # Changer d'état toutes les 3 secondes (60 FPS)
         
@@ -286,38 +330,142 @@ class AllyBot(pygame.sprite.Sprite):
             self.image = self.animations[self.current_direction][0]
 
     def get_position(self):
-        """Retourne la position actuelle du bot allié"""
-        return (self.position[0], self.position[1])
+        """Retourner la position actuelle du bot allié"""
+        return self.position
+
+    def set_bot_reference(self, bot):
+        """Définir la référence au bot principal pour la détection de proximité"""
+        self.bot_reference = bot
+
+    def get_distance_to_checkpoint(self):
+        """Calcule la distance au checkpoint actuel"""
+        if self.current_checkpoint_index >= len(self.checkpoints):
+            return 0  # Tous les checkpoints ont été atteints
+        
+        checkpoint = self.checkpoints[self.current_checkpoint_index]
+        dx = self.position[0] - checkpoint[0]
+        dy = self.position[1] - checkpoint[1]
+        return math.sqrt(dx*dx + dy*dy)
+
+    def get_distance_to_bot(self):
+        """Calcule la distance au bot principal"""
+        if not self.bot_reference:
+            return float('inf')
+        bot_pos = self.bot_reference.position
+        dx = self.position[0] - bot_pos[0]
+        dy = self.position[1] - bot_pos[1]
+        return math.sqrt(dx*dx + dy*dy)
+
+    def update_random_pause_movement(self):
+        """Mise à jour des mouvements aléatoires pendant les pauses"""
+        self.random_movement_timer += 1
+        if self.random_movement_timer >= self.random_movement_interval:
+            self.random_movement_timer = 0
+            # Générer une nouvelle cible aléatoire proche
+            angle = random.uniform(0, 2 * math.pi)
+            distance = random.uniform(10, 30)
+            self.random_target_x = self.position[0] + math.cos(angle) * distance
+            self.random_target_y = self.position[1] + math.sin(angle) * distance
 
     def update_ai(self):
-        """Mise à jour de l'IA du bot allié - comportement autonome"""
-        # Gérer les changements d'état pour un comportement autonome
-        self.state_timer += 1
-        if self.state_timer >= self.state_change_interval:
-            self.state_timer = 0
-            # Changer d'état de manière aléatoire entre exploration et mouvement libre
-            states = ["exploring", "wandering"]
-            self.state = random.choice(states)
+        """Mise à jour de l'IA du bot allié - système de checkpoints avec pauses"""
+        # Vérifier la proximité avec le bot principal
+        if self.bot_reference:
+            distance_to_bot = self.get_distance_to_bot()
+            if distance_to_bot <= self.proximity_distance:
+                if not self.is_near_bot:
+                    self.is_near_bot = True
+                    self.near_bot_timer = 0
+                    print(f"AllyBot: Trop proche du bot principal, arrêt et mouvement aléatoire")
+            else:
+                self.is_near_bot = False
+
+        # Comportement quand proche du bot principal
+        if self.is_near_bot:
+            self.near_bot_timer += 1
+            self.near_bot_movement_timer += 1
+            
+            # Mouvement aléatoire à côté quand proche du bot
+            if self.near_bot_movement_timer >= 20:  # Changer de direction toutes les 0.33 secondes
+                self.near_bot_movement_timer = 0
+                angle = random.uniform(0, 2 * math.pi)
+                distance = random.uniform(15, 40)
+                self.target_x = self.position[0] + math.cos(angle) * distance
+                self.target_y = self.position[1] + math.sin(angle) * distance
+            return  # Ne pas continuer avec le comportement normal
+
+        # Comportement de suivi des checkpoints
+        if self.state == "checkpoint_following":
+            # Gérer les pauses aux checkpoints
+            if self.is_pausing:
+                self.pause_timer += 1
+                self.update_random_pause_movement()
+                self.target_x = self.random_target_x
+                self.target_y = self.random_target_y
+                
+                if self.pause_timer >= self.pause_duration:
+                    self.is_pausing = False
+                    self.pause_timer = 0
+                    print(f"AllyBot: Fin de la pause, reprise du mouvement vers le prochain checkpoint")
+                return
+
+            # Vérifier si tous les checkpoints ont été atteints
+            if self.current_checkpoint_index >= len(self.checkpoints):
+                # Recommencer depuis le premier checkpoint
+                self.current_checkpoint_index = 0
+                print(f"AllyBot: Tous les checkpoints atteints, recommence depuis le début")
+            
+            # Obtenir le checkpoint actuel
+            current_checkpoint = self.checkpoints[self.current_checkpoint_index]
+            distance_to_checkpoint = self.get_distance_to_checkpoint()
+            
+            # Vérifier si le checkpoint actuel est atteint
+            if distance_to_checkpoint <= self.checkpoint_reached_distance:
+                print(f"AllyBot: Checkpoint {self.current_checkpoint_index + 1} atteint à {current_checkpoint}")
+                print(f"AllyBot: Début de la pause de 4 secondes avec mouvements aléatoires")
+                
+                # Commencer la pause
+                self.is_pausing = True
+                self.pause_timer = 0
+                self.current_checkpoint_index += 1
+                
+                # Initialiser le mouvement aléatoire pour la pause
+                self.update_random_pause_movement()
+                return
+            
+            # Définir la cible comme le checkpoint actuel
+            if self.current_checkpoint_index < len(self.checkpoints):
+                self.target_x = current_checkpoint[0]
+                self.target_y = current_checkpoint[1]
+        
+        else:
+            # Ancien comportement autonome (gardé pour compatibilité)
+            self.state_timer += 1
+            if self.state_timer >= self.state_change_interval:
+                self.state_timer = 0
+                # Changer d'état de manière aléatoire entre exploration et mouvement libre
+                states = ["exploring", "wandering"]
+                self.state = random.choice(states)
+                
+                if self.state == "exploring":
+                    # Définir une nouvelle cible d'exploration autonome
+                    self.set_autonomous_exploration_target()
+                elif self.state == "wandering":
+                    # Mouvement libre sans cible spécifique
+                    self.set_wandering_target()
             
             if self.state == "exploring":
-                # Définir une nouvelle cible d'exploration autonome
-                self.set_autonomous_exploration_target()
+                # Comportement d'exploration autonome
+                self.exploration_timer += 1
+                if self.exploration_timer >= self.exploration_change_interval:
+                    self.exploration_timer = 0
+                    self.set_autonomous_exploration_target()
+                    
             elif self.state == "wandering":
-                # Mouvement libre sans cible spécifique
-                self.set_wandering_target()
-        
-        if self.state == "exploring":
-            # Comportement d'exploration autonome
-            self.exploration_timer += 1
-            if self.exploration_timer >= self.exploration_change_interval:
-                self.exploration_timer = 0
-                self.set_autonomous_exploration_target()
-                
-        elif self.state == "wandering":
-            # Comportement de déambulation libre
-            # Changer de direction de temps en temps
-            if random.randint(0, 100) < 2:  # 2% de chance par frame
-                self.set_wandering_target()
+                # Comportement de déambulation libre
+                # Changer de direction de temps en temps
+                if random.randint(0, 100) < 2:  # 2% de chance par frame
+                    self.set_wandering_target()
 
     def set_autonomous_exploration_target(self):
         """Définir une nouvelle cible d'exploration autonome"""

@@ -18,12 +18,27 @@ class Bot(pygame.sprite.Sprite):
         # Référence au bot allié à suivre (au lieu du joueur)
         self.ally_bot = ally_bot
         
-        # Variables pour l'IA de suivi et rotation
+        # Système de checkpoints
+        self.checkpoints = [
+            (957.67, 6275.67),
+            (957.67, 6083.67),
+            (957.67, 5955.67),
+            (582.67, 6071.67),
+            (594.67, 5978.67),
+            (261.67, 5978.67),
+            (261.67, 5603.67),
+            (546.67, 5393.67),
+            (861.67, 5462.67)
+        ]
+        self.current_checkpoint_index = 0
+        self.checkpoint_reached_distance = 50  # Distance pour considérer qu'un checkpoint est atteint
+        self.state = "checkpoint_following"  # Nouvel état pour suivre les checkpoints
+        
+        # Variables pour l'IA de suivi et rotation (gardées pour compatibilité)
         self.follow_distance = 80  # Distance à maintenir avec le bot allié
         self.orbit_radius = 60     # Rayon de l'orbite autour du bot allié
         self.orbit_angle = random.uniform(0, 2 * math.pi)  # Angle initial aléatoire
         self.orbit_speed = 0.02    # Vitesse de rotation autour du bot allié
-        self.state = "following"   # États: "following", "orbiting"
         self.state_timer = 0
         self.state_change_interval = 180  # Changer d'état toutes les 3 secondes (60 FPS)
         
@@ -122,6 +137,16 @@ class Bot(pygame.sprite.Sprite):
             self.current_direction = direction
             self.frame_index = 0
 
+    def get_distance_to_checkpoint(self):
+        """Calcule la distance au checkpoint actuel"""
+        if self.current_checkpoint_index >= len(self.checkpoints):
+            return 0  # Tous les checkpoints ont été atteints
+        
+        checkpoint = self.checkpoints[self.current_checkpoint_index]
+        dx = self.position[0] - checkpoint[0]
+        dy = self.position[1] - checkpoint[1]
+        return math.sqrt(dx*dx + dy*dy)
+
     def get_distance_to_ally(self):
         """Calcule la distance au bot allié"""
         if not self.ally_bot:
@@ -142,44 +167,72 @@ class Bot(pygame.sprite.Sprite):
 
     def update_ai(self):
         """Mise à jour de l'intelligence artificielle du bot"""
-        self.state_timer += 1
-        
-        # Changer d'état périodiquement
-        if self.state_timer >= self.state_change_interval:
-            self.state_timer = 0
-            if self.state == "following":
-                self.state = "orbiting"
-                # Calculer l'angle initial pour l'orbite
-                self.orbit_angle = self.get_angle_to_ally()
-            else:
-                self.state = "following"
-        
-        distance_to_ally = self.get_distance_to_ally()
-        
-        if self.state == "following":
-            # Comportement de suivi du bot allié
-            if distance_to_ally > self.follow_distance:
-                # Se rapprocher du bot allié
-                angle = self.get_angle_to_ally()
-                ally_pos = self.ally_bot.get_position()
-                self.target_x = ally_pos[0] - math.cos(angle) * (self.follow_distance * 0.8)
-                self.target_y = ally_pos[1] - math.sin(angle) * (self.follow_distance * 0.8)
-            else:
-                # Rester à distance du bot allié
-                angle = self.get_angle_to_ally()
-                ally_pos = self.ally_bot.get_position()
-                self.target_x = ally_pos[0] - math.cos(angle) * self.follow_distance
-                self.target_y = ally_pos[1] - math.sin(angle) * self.follow_distance
-                
-        elif self.state == "orbiting":
-            # Comportement d'orbite autour du bot allié
-            self.orbit_angle += self.orbit_speed
-            if self.orbit_angle > 2 * math.pi:
-                self.orbit_angle -= 2 * math.pi
+        if self.state == "checkpoint_following":
+            # Vérifier si tous les checkpoints ont été atteints
+            if self.current_checkpoint_index >= len(self.checkpoints):
+                # Recommencer depuis le premier checkpoint
+                self.current_checkpoint_index = 0
+                print(f"Bot: Tous les checkpoints atteints, recommence depuis le début")
             
-            ally_pos = self.ally_bot.get_position()
-            self.target_x = ally_pos[0] + math.cos(self.orbit_angle) * self.orbit_radius
-            self.target_y = ally_pos[1] + math.sin(self.orbit_angle) * self.orbit_radius
+            # Obtenir le checkpoint actuel
+            current_checkpoint = self.checkpoints[self.current_checkpoint_index]
+            distance_to_checkpoint = self.get_distance_to_checkpoint()
+            
+            # Vérifier si le checkpoint actuel est atteint
+            if distance_to_checkpoint <= self.checkpoint_reached_distance:
+                print(f"Bot: Checkpoint {self.current_checkpoint_index + 1} atteint à {current_checkpoint}")
+                self.current_checkpoint_index += 1
+                
+                # Si ce n'était pas le dernier checkpoint, passer au suivant
+                if self.current_checkpoint_index < len(self.checkpoints):
+                    next_checkpoint = self.checkpoints[self.current_checkpoint_index]
+                    print(f"Bot: Direction vers le checkpoint {self.current_checkpoint_index + 1} à {next_checkpoint}")
+            
+            # Définir la cible comme le checkpoint actuel
+            if self.current_checkpoint_index < len(self.checkpoints):
+                self.target_x = current_checkpoint[0]
+                self.target_y = current_checkpoint[1]
+        
+        else:
+            # Ancien comportement de suivi de l'ally bot (gardé pour compatibilité)
+            self.state_timer += 1
+            
+            # Changer d'état périodiquement
+            if self.state_timer >= self.state_change_interval:
+                self.state_timer = 0
+                if self.state == "following":
+                    self.state = "orbiting"
+                    # Calculer l'angle initial pour l'orbite
+                    self.orbit_angle = self.get_angle_to_ally()
+                else:
+                    self.state = "following"
+            
+            distance_to_ally = self.get_distance_to_ally()
+            
+            if self.state == "following":
+                # Comportement de suivi du bot allié
+                if distance_to_ally > self.follow_distance:
+                    # Se rapprocher du bot allié
+                    angle = self.get_angle_to_ally()
+                    ally_pos = self.ally_bot.get_position()
+                    self.target_x = ally_pos[0] - math.cos(angle) * (self.follow_distance * 0.8)
+                    self.target_y = ally_pos[1] - math.sin(angle) * (self.follow_distance * 0.8)
+                else:
+                    # Rester à distance du bot allié
+                    angle = self.get_angle_to_ally()
+                    ally_pos = self.ally_bot.get_position()
+                    self.target_x = ally_pos[0] - math.cos(angle) * self.follow_distance
+                    self.target_y = ally_pos[1] - math.sin(angle) * self.follow_distance
+                    
+            elif self.state == "orbiting":
+                # Comportement d'orbite autour du bot allié
+                self.orbit_angle += self.orbit_speed
+                if self.orbit_angle > 2 * math.pi:
+                    self.orbit_angle -= 2 * math.pi
+                
+                ally_pos = self.ally_bot.get_position()
+                self.target_x = ally_pos[0] + math.cos(self.orbit_angle) * self.orbit_radius
+                self.target_y = ally_pos[1] + math.sin(self.orbit_angle) * self.orbit_radius
 
     def update_movement(self):
         """Mise à jour du mouvement fluide vers la cible avec des comportements naturels"""

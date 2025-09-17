@@ -112,11 +112,20 @@ def main():
                     game_manager.ui.activate_hotbar_slot(3, 45)
                 elif event.key == pygame.K_o:
                     game_manager.ui.start_stun(2.5)
+                elif event.key == pygame.K_SPACE:
+                    # Déléguer la gestion du dialogue au GameManager
+                    game_manager.handle_dialogue()
+                elif event.key == pygame.K_l:
+                    # Logger la position du joueur
+                    player_pos = game_manager.player.position
+                    print(f"Position du joueur: x={player_pos[0]:.2f}, y={player_pos[1]:.2f}")
+        
         if not game_manager.dialogue_manager.is_active():
             # Gestion des touches en continu
             game_manager.handle_input()
-            # Mise à jour du jeu
-            game_manager.update()
+        
+        # Mise à jour du jeu
+        game_manager.update()
         # Rendu
         game_manager.render()
 

@@ -66,6 +66,9 @@ class GameManager:
         self.bot = Bot(bot_spawn_x, bot_spawn_y, self.ally_bot)  # Le bot suit maintenant l'ally_bot
         self.group.add(self.bot)
         
+        # Établir la référence bidirectionnelle entre ally_bot et bot pour la détection de proximité
+        self.ally_bot.set_bot_reference(self.bot)
+        
         # Configurer les objets de collision pour tous les bots
         self.ally_bot.set_collision_objects(self.collisions)
         self.bot.set_collision_objects(self.collisions)
