@@ -54,7 +54,7 @@ def main():
                 # Activer le Bear Trap Slot 1 avec un cooldown de 10s
                 game_manager.ui.activate_hotbar_slot(1, 10)
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_h:
-                # Activer le ???? Slot 2 avec un cooldown de 20s
+                # Activer le Dragon Breath Slot 2 avec un cooldown de 20s
                 game_manager.ui.activate_hotbar_slot(2, 20)
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_j:
                 # Activer la Tsar Bomba II Slot 3 avec un cooldown de 5s
