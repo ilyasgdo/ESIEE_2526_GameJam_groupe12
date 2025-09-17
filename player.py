@@ -107,16 +107,28 @@ class Player(pygame.sprite.Sprite):
         return math.sqrt(dx*dx + dy*dy)
     
     def can_move_to(self, new_x, new_y):
-        """Vérifie si le joueur peut se déplacer à la position donnée sans dépasser la distance limite"""
+        """Vérifie si le joueur peut se déplacer à la position donnée"""
         if not self.ally_bot:
             return True
         
+        # Si on est en cours d'attraction automatique, on ne peut pas bouger manuellement
+        if self.is_being_attracted:
+            return False
+        
         ally_pos = self.ally_bot.get_position()
+        current_distance = self.get_distance_to_ally()
+        
+        # Calculer la nouvelle distance après le mouvement
         dx = new_x - ally_pos[0]
         dy = new_y - ally_pos[1]
-        distance = math.sqrt(dx*dx + dy*dy)
+        new_distance = math.sqrt(dx*dx + dy*dy)
         
-        return distance <= self.max_distance_from_ally
+        # Si on est dans la limite, on peut bouger
+        if new_distance <= self.max_distance_from_ally:
+            return True
+        
+        # Si on est hors limite, on peut seulement bouger si ça nous rapproche
+        return new_distance < current_distance
 
     def move_right(self): 
         new_x = self.position[0] + self.speed
@@ -157,6 +169,9 @@ class Player(pygame.sprite.Sprite):
     def update(self):
         self.rect.topleft = self.position
 
+        # Gestion du système d'attraction automatique
+        self.update_attraction_system()
+
         if self.is_moving:
             # Détermine la direction d'animation appropriée
             animation_direction = self.determine_animation_direction()
@@ -173,7 +188,69 @@ class Player(pygame.sprite.Sprite):
             self.image = self.animations[self.current_direction][int(self.frame_index)]
         else:
             self.image = self.animations[self.current_direction][0]
+<<<<<<< HEAD
         
         # Remet à zéro les flags de mouvement après l'update
         # (ils seront réactivés lors du prochain appel aux méthodes move_*)
         self.reset_movement_flags()
+=======
+    
+    def update_attraction_system(self):
+        """Met à jour le système d'attraction automatique"""
+        if not self.ally_bot:
+            return
+        
+        current_distance = self.get_distance_to_ally()
+        
+        # Si on est hors de portée
+        if current_distance > self.max_distance_from_ally:
+            # Incrémenter le timer (approximation: 16ms par frame à 60 FPS)
+            self.time_outside_range += 16
+            
+            # Si on a dépassé le temps limite, commencer l'attraction
+            if self.time_outside_range >= self.max_time_outside:
+                self.is_being_attracted = True
+                self.attract_to_ally()
+        else:
+            # Remettre à zéro le timer si on est dans la portée
+            self.time_outside_range = 0
+            self.is_being_attracted = False
+    
+    def attract_to_ally(self):
+        """Attire automatiquement le joueur vers le bot allié"""
+        if not self.ally_bot:
+            return
+        
+        ally_pos = self.ally_bot.get_position()
+        dx = ally_pos[0] - self.position[0]
+        dy = ally_pos[1] - self.position[1]
+        distance = math.sqrt(dx*dx + dy*dy)
+        
+        if distance > 0:
+            # Normaliser le vecteur de direction
+            dx_normalized = dx / distance
+            dy_normalized = dy / distance
+            
+            # Déplacer vers l'allié
+            self.position[0] += dx_normalized * self.auto_attraction_speed
+            self.position[1] += dy_normalized * self.auto_attraction_speed
+            
+            # Changer l'animation selon la direction principale
+            if abs(dx) > abs(dy):
+                if dx > 0:
+                    self.change_animation('right')
+                else:
+                    self.change_animation('left')
+            else:
+                if dy > 0:
+                    self.change_animation('down')
+                else:
+                    self.change_animation('up')
+            
+            self.is_moving = True
+            
+            # Arrêter l'attraction si on est assez proche
+            if distance <= self.max_distance_from_ally * 0.8:  # 80% de la distance max
+                self.is_being_attracted = False
+                self.time_outside_range = 0
+>>>>>>> b4a9f83 (feat(player): implement automatic ally attraction system)
