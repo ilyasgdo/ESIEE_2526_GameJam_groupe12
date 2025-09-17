@@ -17,7 +17,7 @@ class Player(pygame.sprite.Sprite):
         
         # Référence au bot allié pour la contrainte de distance
         self.ally_bot = None
-        self.max_distance_from_ally = 3000
+        self.max_distance_from_ally = 300
         
         # Système d'attraction automatique
         self.time_outside_range = 0  # Temps passé hors de portée (en millisecondes)

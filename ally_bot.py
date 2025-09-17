@@ -10,22 +10,18 @@ class AllyBot(pygame.sprite.Sprite):
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [float(x), float(y)]
         self.old_position = self.position.copy()  # Pour la gestion des collisions
-        self.speed = 2.5  # Légèrement plus rapide que les autres bots
+        self.speed = 2.5  # Vitesse de déplacement
         self.frame_index = 0
         self.animation_speed = 1
         self.current_direction = 'down'
         
-        # Référence au joueur à suivre
+        # Référence au joueur (gardée pour la contrainte de distance du joueur)
         self.player = player
         
-        # Variables pour l'IA de suivi
-        self.follow_distance = 60  # Distance à maintenir avec le joueur
-        self.orbit_radius = 45     # Rayon de l'orbite autour du joueur
-        self.orbit_angle = random.uniform(0, 2 * math.pi)  # Angle initial aléatoire
-        self.orbit_speed = 0.025   # Vitesse de rotation autour du joueur
-        self.state = "following"   # États: "following", "orbiting", "exploring"
+        # Variables pour l'IA autonome
+        self.state = "exploring"   # États: "exploring", "wandering"
         self.state_timer = 0
-        self.state_change_interval = 150  # Changer d'état toutes les 2.5 secondes (60 FPS)
+        self.state_change_interval = 180  # Changer d'état toutes les 3 secondes (60 FPS)
         
         # Variables pour mouvement fluide
         self.target_x = x
@@ -294,74 +290,52 @@ class AllyBot(pygame.sprite.Sprite):
         return (self.position[0], self.position[1])
 
     def update_ai(self):
-        """Mise à jour de l'IA du bot allié pour suivre le joueur"""
-        # Gérer les changements d'état
+        """Mise à jour de l'IA du bot allié - comportement autonome"""
+        # Gérer les changements d'état pour un comportement autonome
         self.state_timer += 1
         if self.state_timer >= self.state_change_interval:
             self.state_timer = 0
-            # Changer d'état de manière aléatoire
-            states = ["following", "orbiting", "exploring"]
-            current_index = states.index(self.state)
-            # Éviter de rester dans le même état
-            new_states = [s for s in states if s != self.state]
-            self.state = random.choice(new_states)
+            # Changer d'état de manière aléatoire entre exploration et mouvement libre
+            states = ["exploring", "wandering"]
+            self.state = random.choice(states)
             
-            if self.state == "orbiting":
-                # Initialiser l'angle d'orbite basé sur la position actuelle
-                self.orbit_angle = self.get_angle_to_player()
-            elif self.state == "exploring":
-                # Définir une nouvelle cible d'exploration
-                self.set_exploration_target()
+            if self.state == "exploring":
+                # Définir une nouvelle cible d'exploration autonome
+                self.set_autonomous_exploration_target()
+            elif self.state == "wandering":
+                # Mouvement libre sans cible spécifique
+                self.set_wandering_target()
         
-        distance_to_player = self.get_distance_to_player()
-        
-        if self.state == "following":
-            # Comportement de suivi du joueur
-            if distance_to_player > self.follow_distance:
-                # Se rapprocher du joueur
-                angle = self.get_angle_to_player()
-                player_pos = self.player.position
-                self.target_x = player_pos[0] - math.cos(angle) * (self.follow_distance * 0.8)
-                self.target_y = player_pos[1] - math.sin(angle) * (self.follow_distance * 0.8)
-            else:
-                # Rester à distance du joueur
-                angle = self.get_angle_to_player()
-                player_pos = self.player.position
-                self.target_x = player_pos[0] - math.cos(angle) * self.follow_distance
-                self.target_y = player_pos[1] - math.sin(angle) * self.follow_distance
-                
-        elif self.state == "orbiting":
-            # Comportement d'orbite autour du joueur
-            self.orbit_angle += self.orbit_speed
-            if self.orbit_angle > 2 * math.pi:
-                self.orbit_angle -= 2 * math.pi
-            
-            player_pos = self.player.position
-            self.target_x = player_pos[0] + math.cos(self.orbit_angle) * self.orbit_radius
-            self.target_y = player_pos[1] + math.sin(self.orbit_angle) * self.orbit_radius
-            
-        elif self.state == "exploring":
+        if self.state == "exploring":
             # Comportement d'exploration autonome
             self.exploration_timer += 1
             if self.exploration_timer >= self.exploration_change_interval:
                 self.exploration_timer = 0
-                self.set_exploration_target()
-            
-            # Si trop loin du joueur, revenir vers lui
-            if distance_to_player > self.follow_distance * 2:
-                self.state = "following"
-                self.state_timer = 0
+                self.set_autonomous_exploration_target()
+                
+        elif self.state == "wandering":
+            # Comportement de déambulation libre
+            # Changer de direction de temps en temps
+            if random.randint(0, 100) < 2:  # 2% de chance par frame
+                self.set_wandering_target()
 
-    def set_exploration_target(self):
-        """Définir une nouvelle cible d'exploration près du joueur"""
-        player_pos = self.player.position
-        # Exploration dans un rayon autour du joueur
-        exploration_radius = 100
+    def set_autonomous_exploration_target(self):
+        """Définir une nouvelle cible d'exploration autonome"""
+        # Exploration dans un rayon autour de la position actuelle
+        exploration_radius = 150
         angle = random.uniform(0, 2 * math.pi)
-        self.exploration_target_x = player_pos[0] + math.cos(angle) * exploration_radius
-        self.exploration_target_y = player_pos[1] + math.sin(angle) * exploration_radius
+        self.exploration_target_x = self.position[0] + math.cos(angle) * exploration_radius
+        self.exploration_target_y = self.position[1] + math.sin(angle) * exploration_radius
         self.target_x = self.exploration_target_x
         self.target_y = self.exploration_target_y
+
+    def set_wandering_target(self):
+        """Définir une cible pour le mouvement de déambulation"""
+        # Mouvement aléatoire dans un rayon proche
+        wander_radius = 80
+        angle = random.uniform(0, 2 * math.pi)
+        self.target_x = self.position[0] + math.cos(angle) * wander_radius
+        self.target_y = self.position[1] + math.sin(angle) * wander_radius
 
     def get_distance_to_player(self):
         """Calculer la distance au joueur"""
@@ -466,4 +440,4 @@ class AllyBot(pygame.sprite.Sprite):
                 self.position[1] = new_y
             else:
                 # Aucun mouvement possible, restaurer la position
-                self.restore_position()
+                pass

@@ -17,7 +17,7 @@ class FormationManager:
             return
         
         leader_pos = self.leader.get_position()
-        num_subordinates = 5
+        num_subordinates = 10
         
         # Calculer les angles pour une répartition équilibrée en cercle
         angle_step = (2 * math.pi) / num_subordinates
