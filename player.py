@@ -27,10 +27,10 @@ class Player(pygame.sprite.Sprite):
 
         # Récupérer toutes les frames
         self.animations = {
-            'down': self.load_row(0),
-            'left': self.load_row(2),
-            'right': self.load_row(1),
-            'up': self.load_row(3)
+            'down': self.load_row(5),
+            'left': self.load_row(7),
+            'right': self.load_row(9),
+            'up': self.load_row(11)
         }
         self.feet = pygame.Rect(0, 0, self.rect.width/2, 12)
 
