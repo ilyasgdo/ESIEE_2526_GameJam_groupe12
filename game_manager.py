@@ -11,6 +11,7 @@ import pytmx
 import pyscroll
 
 from player import Player
+from bot import Bot
 
 class GameManager:
     """Gestionnaire principal du jeu"""
@@ -32,6 +33,12 @@ class GameManager:
         self.player = Player(player_position.x, player_position.y)
 
         self.group.add(self.player)
+        
+        # Créer le bot qui suit le joueur
+        bot_spawn_x = player_position.x + 50  # Spawn à côté du joueur
+        bot_spawn_y = player_position.y + 50
+        self.bot = Bot(bot_spawn_x, bot_spawn_y, self.player)
+        self.group.add(self.bot)
 
         # centrer la camera sur le joueur
 
@@ -117,6 +124,10 @@ class GameManager:
     def handle_input(self):
         pressed = pygame.key.get_pressed()
         is_moving = False
+        
+        # Réinitialiser l'état de mouvement du joueur
+        self.player.stop()
+
         if pressed[pygame.K_z]:
             self.player.move_up()
             is_moving = True
