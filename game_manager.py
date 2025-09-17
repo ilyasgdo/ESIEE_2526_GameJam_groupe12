@@ -12,6 +12,7 @@ import pyscroll
 
 from player import Player
 from bot import Bot
+from minimap import Minimap
 
 class GameManager:
     """Gestionnaire principal du jeu"""
@@ -39,6 +40,9 @@ class GameManager:
         bot_spawn_y = player_position.y + 50
         self.bot = Bot(bot_spawn_x, bot_spawn_y, self.player)
         self.group.add(self.bot)
+        
+        # Créer la minimap
+        self.minimap = Minimap(self.screen, self.tmx_data, x=10, y=10, width=200, height=150)
 
         # centrer la camera sur le joueur
 
@@ -114,11 +118,20 @@ class GameManager:
         """Mise à jour des entités du jeu"""
         self.group.update()
         self.group.center(self.player.rect.center)
+        
+        # Mettre à jour la minimap avec les positions actuelles
+        if hasattr(self, 'minimap'):
+            self.minimap.update(self.player, self.bot)
 
 
     def render(self):
         """Rendu des entités du jeu"""
         self.group.draw(self.screen)
+        
+        # Rendre la minimap par-dessus le jeu
+        if hasattr(self, 'minimap'):
+            self.minimap.render()
+            
         pygame.display.flip()
 
     def handle_input(self):
