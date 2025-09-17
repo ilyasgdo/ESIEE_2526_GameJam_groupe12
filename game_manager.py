@@ -180,9 +180,6 @@ class GameManager:
     def handle_input(self):
         pressed = pygame.key.get_pressed()
         is_moving = False
-        
-        # Réinitialiser l'état de mouvement du joueur
-        self.player.stop()
 
         self.player.save_location()
 

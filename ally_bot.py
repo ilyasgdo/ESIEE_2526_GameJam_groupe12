@@ -6,7 +6,7 @@ class AllyBot(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
         # Utiliser le même sprite sheet que le joueur mais avec une couleur différente
-        self.sprite_sheet = pygame.image.load('assets/sprites/player/BIRDSPRITESHEET_Blue.png').convert_alpha()
+        self.sprite_sheet = pygame.image.load('assets/sprites/player/RACCOONSPRITESHEET.png').convert_alpha()
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [float(x), float(y)]
         self.speed = 1.5  # Vitesse modérée
@@ -43,27 +43,29 @@ class AllyBot(pygame.sprite.Sprite):
         
         # Récupérer toutes les frames (même système que le joueur)
         self.animations = {
-            'down': self.load_row(0),
-            'left': self.load_row(2),
-            'right': self.load_row(1),
-            'up': self.load_row(3)
+            'down': self.load_row(5),
+            'left': self.load_row(7),
+            'right': self.load_row(9),
+            'up': self.load_row(11)
         }
         
         # Appliquer une teinte verte pour distinguer le bot allié
-        self.apply_tint((200, 255, 200))  # Teinte verte
         
         self.image = self.animations['up'][0]
         self.is_moving = True
 
-    def get_image(self, x, y):
-        """Récupère une image du sprite sheet"""
-        image = pygame.Surface((32, 32), pygame.SRCALPHA)
-        image.blit(self.sprite_sheet, (0, 0), (x, y, 32, 32))
-        return image
+    def get_image(self, x, y, scale=4):
+        frame = pygame.Surface((32, 32), pygame.SRCALPHA)
+        frame.blit(self.sprite_sheet, (0, 0), (x, y, 32, 32))
 
-    def load_row(self, row):
-        """Charge une ligne d'animation"""
-        return [self.get_image(col * 32, row * 32) for col in range(4)]
+        # Agrandir la frame
+        size = frame.get_width() * scale, frame.get_height() * scale
+        frame = pygame.transform.scale(frame, size)
+        return frame
+
+    def load_row(self, row, scale=4):
+        """Charge une ligne d'animation et scale chaque frame"""
+        return [self.get_image(col * 32, row * 32, scale) for col in range(4)]
 
     def apply_tint(self, color):
         """Applique une teinte colorée aux sprites"""
