@@ -5,11 +5,11 @@ Version simplifiée - chargement de map uniquement avec diagnostics
 """
 
 import pygame
-import sys
 import os
 import pytmx
 import pyscroll
 from dialogue_manager import DialogueManager
+from fire_ball import FireBall
 from player import Player
 from bot import Bot
 from ally_bot import AllyBot
@@ -40,13 +40,16 @@ class GameManager:
         self.group.add(self.player)
         self.dialogue_manager = DialogueManager()
         self.dialogue_manager.load_from_file("assets/dialogues/scenes.json")
-        
+        self.fireballs = pygame.sprite.Group()
+        self.last_shot_time = 0
+        self.shoot_cooldown = 2000  # 2 sec en millisecondes
         # Créer le bot allié qui se déplace vers le haut - spawn près du joueur
         ally_spawn_x = player_position.x + 30  # Spawn près du joueur
         ally_spawn_y = player_position.y + 30
         self.ally_bot = AllyBot(ally_spawn_x, ally_spawn_y)
         self.group.add(self.ally_bot)
-        
+        self.percentage = 50.0  # Pourcentage initial de 50%
+        self.score = 0
         # Définir la référence au bot allié pour le joueur (contrainte de distance)
         self.player.set_ally_bot(self.ally_bot)
         
@@ -145,11 +148,21 @@ class GameManager:
             self.error_message = "Fichier TMX introuvable"
             self.map_loaded = False
 
+    def get_percentage(self):
+        """Retourne le pourcentage actuel"""
+        return self.percentage
+
+    def get_score(self):
+        """Retourne le score actuel"""
+        return self.score
+
     def update(self):
         """Mise à jour des entités du jeu"""
         self.group.update()
         self.group.center(self.player.rect.center)
-        
+        self.fireballs.update()
+        # Vérifier les collisions projectile-héros
+        self.check_projectile_hero_collision()
         # Mettre à jour le gestionnaire de formation
         if hasattr(self, 'formation_manager'):
             self.formation_manager.update()
@@ -171,16 +184,64 @@ class GameManager:
             self.minimap.update()
         # Mise à jour de l'UI (timers, animations UI)
         self.ui.update()
-        # Mise à jour de l'UI (timers, animations UI)
-        self.ui.update()
+        
+    def check_projectile_hero_collision(self):
+            """Vérifie les collisions entre les projectiles et le héros (bot)"""
+            if not hasattr(self, 'bot') or not self.bot:
+                return
+            
+            if not hasattr(self, 'fireballs') or not self.fireballs:
+                return
+            
+            # Collision avec le bot principal (héros) - détruit le projectile automatiquement
+            collisions = pygame.sprite.spritecollide(self.bot, self.fireballs, True)
+            
+            for fireball in collisions:
+                # Augmenter le pourcentage de 0.5%
+                self.percentage += 0.5
+                # Plafonner le pourcentage à 100% si nécessaire
+                if self.percentage > 100.0:
+                    self.percentage = 100.0
+                
+                # Augmenter le score
+                self.score += 10
+                
+                # Message de debug
+                print(f"💥 Héros touché! Pourcentage: {self.percentage:.1f}% - Score: {self.score}")
+                
+                # Effet visuel/sonore optionnel (peut être ajouté plus tard)
+                self.on_hero_hit()
+
+    def on_hero_hit(self):
+        """Appelé quand le héros est touché - pour effets supplémentaires"""
+        # Ici on peut ajouter des effets visuels, sons, etc.
+        # Pour l'instant, juste un feedback console
+        if self.percentage >= 100.0:
+            print("🎉 POURCENTAGE MAXIMUM ATTEINT! (100%)")
+        elif self.percentage >= 75.0:
+            print("⭐ Excellent! Pourcentage élevé!")
+        elif self.percentage >= 60.0:
+            print("👍 Bon travail!")
+    
+    def reset_percentage(self):
+        """Remet le pourcentage à 50% (méthode utilitaire)"""
+        self.percentage = 50.0
+        print(f"Pourcentage remis à {self.percentage}%")
+    
+    def add_percentage_bonus(self, bonus):
+        """Ajoute un bonus de pourcentage (méthode utilitaire)"""
+        old_percentage = self.percentage
+        self.percentage += bonus
+        if self.percentage > 100.0:
+            self.percentage = 100.0
+        print(f"Bonus de {bonus}%! Pourcentage: {old_percentage:.1f}% → {self.percentage:.1f}%")
 
 
     def render(self):
         """Rendu des entités du jeu"""
         self.group.draw(self.screen)
-        
+        self.fireballs.draw(self.screen)
         self.dialogue_manager.draw(self.screen)
-        
         # Rendre la minimap par-dessus le jeu
         if hasattr(self, 'minimap'):
             self.minimap.render()
@@ -210,6 +271,22 @@ class GameManager:
         if not is_moving:
             self.player.stop()
 
+        self.player.reset_movement_flags()
+        if pressed[pygame.K_z]: self.player.movement_directions['up'] = True
+        if pressed[pygame.K_s]: self.player.movement_directions['down'] = True
+        if pressed[pygame.K_q]: self.player.movement_directions['left'] = True
+        if pressed[pygame.K_d]: self.player.movement_directions['right'] = True
+        if pressed[pygame.K_SPACE]:
+            now = pygame.time.get_ticks()
+            if now - self.last_shot_time >= self.shoot_cooldown:
+                fireball = FireBall(
+                    self.player.position[0] + 16,  # centre du sprite joueur
+                    self.player.position[1] + 16,
+                    self.player.last_direction
+                )
+                self.fireballs.add(fireball)
+                self.group.add(fireball)  # pyscroll la gère
+                self.last_shot_time = now
         for obj in self.collisions:
             top_left = (obj.x, obj.y)
             bottom_left = (obj.x, obj.y + obj.height)

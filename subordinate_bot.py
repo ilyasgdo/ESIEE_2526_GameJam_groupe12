@@ -6,7 +6,7 @@ class SubordinateBot(pygame.sprite.Sprite):
     def __init__(self, x, y, leader, formation_angle, formation_radius=60):
         super().__init__()
         # Utiliser le même sprite sheet que le joueur mais avec une couleur différente
-        self.sprite_sheet = pygame.image.load('assets/sprites/player/BIRDSPRITESHEET_Blue.png').convert_alpha()
+        self.sprite_sheet = pygame.image.load('assets/sprites/player/CATSPRITESHEET_Orange.png').convert_alpha()
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [float(x), float(y)]
         self.speed = 1.8  # Légèrement plus rapide pour rattraper le leader

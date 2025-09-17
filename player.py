@@ -4,7 +4,7 @@ import math
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
-        self.sprite_sheet = pygame.image.load('assets/sprites/player/BIRDSPRITESHEET_Blue.png').convert_alpha()
+        self.sprite_sheet = pygame.image.load('assets/sprites/player/FOXSPRITESHEET.png').convert_alpha()
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [x, y]
         self.speed = 3
@@ -55,19 +55,31 @@ class Player(pygame.sprite.Sprite):
         if self.current_direction != direction:
             self.current_direction = direction
             self.frame_index = 0
-
     def determine_animation_direction(self):
-        """Détermine quelle animation jouer en cas de mouvement diagonal"""
-        # Priorité : horizontal > vertical (vous pouvez ajuster selon vos préférences)
-        if self.movement_directions['left']:
-            return 'left'
-        elif self.movement_directions['right']:
-            return 'right'
-        elif self.movement_directions['up']:
-            return 'up'
-        elif self.movement_directions['down']:
-            return 'down'
-        return self.last_direction
+        """Détermine la direction d'animation selon les touches pressées"""
+        pressed_dirs = [dir for dir, active in self.movement_directions.items() if active]
+
+        if not pressed_dirs:
+            return self.last_direction  # aucune touche → garde la dernière direction
+
+        # Priorité horizontal > vertical
+        if 'left' in pressed_dirs:
+            direction = 'left'
+        elif 'right' in pressed_dirs:
+            direction = 'right'
+        elif 'up' in pressed_dirs:
+            direction = 'up'
+        elif 'down' in pressed_dirs:
+            direction = 'down'
+        else:
+            direction = self.last_direction
+
+        # mettre à jour last_direction seulement si une touche est active
+        if pressed_dirs:
+            self.last_direction = direction
+
+        return direction
+
 
     def set_ally_bot(self, ally_bot):
         """Définit le bot allié pour la contrainte de distance"""
