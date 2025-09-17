@@ -34,6 +34,16 @@ class Bot(pygame.sprite.Sprite):
         self.acceleration = 0.3
         self.friction = 0.85
         
+        # Variables pour des mouvements plus naturels
+        self.micro_movement_timer = 0
+        self.micro_movement_x = 0
+        self.micro_movement_y = 0
+        self.hesitation_timer = 0
+        self.is_hesitating = False
+        self.natural_speed_variation = 1.0
+        self.breathing_timer = 0
+        self.last_direction_change = 0
+        
         # Récupérer toutes les frames (même système que le joueur)
         self.animations = {
             'down': self.load_row(0),
@@ -135,45 +145,92 @@ class Bot(pygame.sprite.Sprite):
             self.target_y = ally_pos[1] + math.sin(self.orbit_angle) * self.orbit_radius
 
     def update_movement(self):
-        """Mise à jour du mouvement fluide vers la cible"""
-        # Calculer la direction vers la cible
-        dx = self.target_x - self.position[0]
-        dy = self.target_y - self.position[1]
+        """Mise à jour du mouvement fluide vers la cible avec des comportements naturels"""
+        # Micro-mouvements pour simuler l'imprécision naturelle
+        self.micro_movement_timer += 1
+        if self.micro_movement_timer >= random.randint(4, 10):  # Variation dans le timing
+            self.micro_movement_timer = 0
+            self.micro_movement_x = random.uniform(-0.12, 0.12)
+            self.micro_movement_y = random.uniform(-0.12, 0.12)
         
-        # Appliquer l'accélération vers la cible
-        self.velocity_x += dx * self.acceleration * 0.01
-        self.velocity_y += dy * self.acceleration * 0.01
+        # Effet de "respiration" subtil
+        self.breathing_timer += 0.06 + random.uniform(-0.01, 0.01)
+        breathing_effect_x = math.sin(self.breathing_timer) * 0.06
+        breathing_effect_y = math.cos(self.breathing_timer * 0.8) * 0.04
         
-        # Limiter la vitesse maximale
-        max_speed = self.speed
+        # Calculer la direction vers la cible avec effets naturels
+        adjusted_target_x = self.target_x + self.micro_movement_x + breathing_effect_x
+        adjusted_target_y = self.target_y + self.micro_movement_y + breathing_effect_y
+        
+        dx = adjusted_target_x - self.position[0]
+        dy = adjusted_target_y - self.position[1]
+        distance_to_target = math.sqrt(dx*dx + dy*dy)
+        
+        # Hésitation occasionnelle lors de changements de direction
+        if distance_to_target > 3:
+            current_direction = math.atan2(dy, dx)
+            if abs(current_direction - self.last_direction_change) > 0.4:
+                if random.random() < 0.15 and not self.is_hesitating:  # 15% de chance
+                    self.is_hesitating = True
+                    self.hesitation_timer = random.randint(6, 15)
+                    self.last_direction_change = current_direction
+        
+        # Gérer l'hésitation
+        if self.is_hesitating:
+            self.hesitation_timer -= 1
+            if self.hesitation_timer <= 0:
+                self.is_hesitating = False
+            # Réduire le mouvement pendant l'hésitation
+            self.natural_speed_variation = 0.4 + random.uniform(0, 0.3)
+        else:
+            # Variation naturelle de la vitesse
+            base_variation = 0.8 + random.uniform(0, 0.4)
+            # Ajuster selon la distance (plus loin = plus rapide)
+            distance_factor = min(1.1, 0.9 + distance_to_target * 0.005)
+            self.natural_speed_variation = base_variation * distance_factor
+        
+        # Appliquer l'accélération vers la cible avec transition douce
+        acceleration_factor = self.acceleration * 0.01 * self.natural_speed_variation
+        target_velocity_x = dx * acceleration_factor
+        target_velocity_y = dy * acceleration_factor
+        
+        # Transition plus douce vers la nouvelle vélocité
+        transition_speed = 0.1 if not self.is_hesitating else 0.03
+        self.velocity_x += (target_velocity_x - self.velocity_x) * transition_speed
+        self.velocity_y += (target_velocity_y - self.velocity_y) * transition_speed
+        
+        # Limiter la vitesse maximale avec variation naturelle
+        current_max_speed = self.speed * (0.85 + random.uniform(0, 0.3))
         speed = math.sqrt(self.velocity_x * self.velocity_x + self.velocity_y * self.velocity_y)
-        if speed > max_speed:
-            self.velocity_x = (self.velocity_x / speed) * max_speed
-            self.velocity_y = (self.velocity_y / speed) * max_speed
+        if speed > current_max_speed:
+            self.velocity_x = (self.velocity_x / speed) * current_max_speed
+            self.velocity_y = (self.velocity_y / speed) * current_max_speed
         
-        # Appliquer la friction
-        self.velocity_x *= self.friction
-        self.velocity_y *= self.friction
+        # Appliquer une friction variable
+        friction_factor = self.friction + random.uniform(-0.02, 0.02)
+        self.velocity_x *= friction_factor
+        self.velocity_y *= friction_factor
         
         # Mettre à jour la position
         self.position[0] += self.velocity_x
         self.position[1] += self.velocity_y
         
-        # Déterminer la direction d'animation basée sur le mouvement
+        # Déterminer la direction d'animation basée sur le mouvement avec plus de fluidité
+        movement_threshold = 0.3  # Seuil plus bas pour plus de réactivité
         if abs(self.velocity_x) > abs(self.velocity_y):
-            if self.velocity_x > 0.5:
+            if self.velocity_x > movement_threshold:
                 self.change_animation('right')
                 self.is_moving = True
-            elif self.velocity_x < -0.5:
+            elif self.velocity_x < -movement_threshold:
                 self.change_animation('left')
                 self.is_moving = True
             else:
                 self.is_moving = False
         else:
-            if self.velocity_y > 0.5:
+            if self.velocity_y > movement_threshold:
                 self.change_animation('down')
                 self.is_moving = True
-            elif self.velocity_y < -0.5:
+            elif self.velocity_y < -movement_threshold:
                 self.change_animation('up')
                 self.is_moving = True
             else:

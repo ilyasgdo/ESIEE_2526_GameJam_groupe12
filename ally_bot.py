@@ -28,6 +28,15 @@ class AllyBot(pygame.sprite.Sprite):
         self.random_direction_x = 0
         self.random_direction_y = -1  # Tendance vers le haut
         
+        # Variables pour des mouvements plus naturels
+        self.micro_movement_timer = 0
+        self.micro_movement_x = 0
+        self.micro_movement_y = 0
+        self.hesitation_timer = 0
+        self.is_hesitating = False
+        self.natural_speed_variation = 1.0
+        self.breathing_timer = 0
+        
         # Limites de mouvement (pour rester dans les limites de la carte)
         self.map_width = 1280  # 40 * 32
         self.map_height = 6400  # 200 * 32
@@ -74,34 +83,79 @@ class AllyBot(pygame.sprite.Sprite):
             self.frame_index = 0
 
     def update_random_movement(self):
-        """Met à jour le mouvement aléatoire avec tendance vers le haut"""
+        """Met à jour le mouvement aléatoire avec tendance vers le haut et variations naturelles"""
         self.direction_change_timer += 1
         
-        # Changer de direction aléatoirement
-        if self.direction_change_timer >= self.direction_change_interval:
+        # Changer de direction aléatoirement avec variation
+        base_interval = self.direction_change_interval
+        if self.direction_change_timer >= base_interval:
             self.direction_change_timer = 0
-            self.direction_change_interval = random.randint(60, 180)
+            # Variation dans l'intervalle pour plus de naturel
+            self.direction_change_interval = random.randint(40, 220)
             
-            # Mouvement aléatoire avec forte tendance vers le haut
-            self.random_direction_x = random.uniform(-0.5, 0.5)  # Mouvement horizontal léger
-            self.random_direction_y = random.uniform(-1.0, -0.3)  # Mouvement vers le haut principalement
+            # Parfois hésiter avant de changer de direction
+            if random.random() < 0.3:  # 30% de chance d'hésiter
+                self.is_hesitating = True
+                self.hesitation_timer = random.randint(10, 30)
+                return
             
-            # Éviter les bords de la carte
-            if self.position[0] < 100:  # Trop à gauche
-                self.random_direction_x = abs(self.random_direction_x)
-            elif self.position[0] > self.map_width - 100:  # Trop à droite
-                self.random_direction_x = -abs(self.random_direction_x)
+            # Mouvement aléatoire avec forte tendance vers le haut mais plus de variation
+            self.random_direction_x = random.uniform(-0.7, 0.7)  # Plus de variation horizontale
+            self.random_direction_y = random.uniform(-1.2, -0.1)  # Variation verticale
+            
+            # Ajouter des micro-corrections occasionnelles
+            if random.random() < 0.4:  # 40% de chance
+                self.random_direction_x += random.uniform(-0.3, 0.3)
+                self.random_direction_y += random.uniform(-0.2, 0.2)
+            
+            # Éviter les bords de la carte avec plus de fluidité
+            edge_buffer = 150  # Zone tampon plus large
+            if self.position[0] < edge_buffer:  # Trop à gauche
+                self.random_direction_x = abs(self.random_direction_x) + random.uniform(0.1, 0.3)
+            elif self.position[0] > self.map_width - edge_buffer:  # Trop à droite
+                self.random_direction_x = -abs(self.random_direction_x) - random.uniform(0.1, 0.3)
                 
-            if self.position[1] < 100:  # Trop en haut
-                self.random_direction_y = abs(self.random_direction_y)
-            elif self.position[1] > self.map_height - 100:  # Trop en bas
-                self.random_direction_y = -abs(self.random_direction_y)
+            if self.position[1] < edge_buffer:  # Trop en haut
+                self.random_direction_y = abs(self.random_direction_y) + random.uniform(0.1, 0.3)
+            elif self.position[1] > self.map_height - edge_buffer:  # Trop en bas
+                self.random_direction_y = -abs(self.random_direction_y) - random.uniform(0.1, 0.3)
+        
+        # Gérer l'hésitation
+        if self.is_hesitating:
+            self.hesitation_timer -= 1
+            if self.hesitation_timer <= 0:
+                self.is_hesitating = False
+            # Réduire le mouvement pendant l'hésitation
+            self.natural_speed_variation = 0.3 + random.uniform(0, 0.4)
+        else:
+            # Variation naturelle de la vitesse
+            self.natural_speed_variation = 0.8 + random.uniform(0, 0.4)
+        
+        # Micro-mouvements pour simuler l'imprécision naturelle
+        self.micro_movement_timer += 1
+        if self.micro_movement_timer >= 5:  # Chaque 5 frames
+            self.micro_movement_timer = 0
+            self.micro_movement_x = random.uniform(-0.1, 0.1)
+            self.micro_movement_y = random.uniform(-0.1, 0.1)
+        
+        # Effet de "respiration" subtil
+        self.breathing_timer += 0.1
+        breathing_effect = math.sin(self.breathing_timer) * 0.05
 
     def update_movement(self):
-        """Met à jour le mouvement du bot allié"""
-        # Calculer la direction cible
-        self.target_x = self.position[0] + self.random_direction_x * 100
-        self.target_y = self.position[1] + self.random_direction_y * 100
+        """Met à jour le mouvement du bot avec des transitions plus fluides"""
+        # Calculer la direction vers la cible avec micro-mouvements
+        target_direction_x = self.random_direction_x + self.micro_movement_x
+        target_direction_y = self.random_direction_y + self.micro_movement_y
+        
+        # Ajouter l'effet de respiration
+        breathing_effect = math.sin(self.breathing_timer) * 0.05
+        target_direction_x += breathing_effect
+        target_direction_y += breathing_effect * 0.5
+        
+        # Calculer la direction cible avec les effets naturels
+        self.target_x = self.position[0] + target_direction_x * 100
+        self.target_y = self.position[1] + target_direction_y * 100
         
         # Calculer la direction vers la cible
         dx = self.target_x - self.position[0]
@@ -113,19 +167,24 @@ class AllyBot(pygame.sprite.Sprite):
             dx /= distance
             dy /= distance
             
-            # Appliquer l'accélération
-            self.velocity_x += dx * self.acceleration
-            self.velocity_y += dy * self.acceleration
+            # Transition plus douce vers la nouvelle direction (interpolation)
+            transition_speed = 0.15 if not self.is_hesitating else 0.05
+            self.velocity_x += (dx * self.acceleration - self.velocity_x) * transition_speed
+            self.velocity_y += (dy * self.acceleration - self.velocity_y) * transition_speed
             
-            # Limiter la vitesse
+            # Appliquer la variation de vitesse naturelle
+            adjusted_speed = self.speed * self.natural_speed_variation
+            
+            # Limiter la vitesse avec une variation naturelle
             speed = math.sqrt(self.velocity_x*self.velocity_x + self.velocity_y*self.velocity_y)
-            if speed > self.speed:
-                self.velocity_x = (self.velocity_x / speed) * self.speed
-                self.velocity_y = (self.velocity_y / speed) * self.speed
+            if speed > adjusted_speed:
+                self.velocity_x = (self.velocity_x / speed) * adjusted_speed
+                self.velocity_y = (self.velocity_y / speed) * adjusted_speed
         
-        # Appliquer la friction
-        self.velocity_x *= self.friction
-        self.velocity_y *= self.friction
+        # Appliquer une friction variable pour plus de naturel
+        friction_factor = self.friction + random.uniform(-0.02, 0.02)
+        self.velocity_x *= friction_factor
+        self.velocity_y *= friction_factor
         
         # Mettre à jour la position
         self.position[0] += self.velocity_x
@@ -138,16 +197,16 @@ class AllyBot(pygame.sprite.Sprite):
         # Mettre à jour le rect
         self.rect.center = (int(self.position[0]), int(self.position[1]))
         
-        # Déterminer la direction d'animation
+        # Déterminer la direction d'animation avec plus de fluidité
         if abs(self.velocity_x) > abs(self.velocity_y):
-            if self.velocity_x > 0:
+            if self.velocity_x > 0.1:
                 self.change_animation('right')
-            else:
+            elif self.velocity_x < -0.1:
                 self.change_animation('left')
         else:
-            if self.velocity_y > 0:
+            if self.velocity_y > 0.1:
                 self.change_animation('down')
-            else:
+            elif self.velocity_y < -0.1:
                 self.change_animation('up')
 
     def update(self):
