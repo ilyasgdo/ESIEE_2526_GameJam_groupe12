@@ -146,6 +146,10 @@ class GameManager:
             self.minimap.update_player_position(self.player.position[0], self.player.position[1])
             self.minimap.update_ally_position(self.ally_bot.position[0], self.ally_bot.position[1])
             
+            # Mettre à jour la position du bot
+            if hasattr(self, 'bot') and self.bot:
+                self.minimap.update_bot_position(self.bot.position[0], self.bot.position[1])
+            
             # Mettre à jour les positions des subordonnés
             if hasattr(self, 'formation_manager'):
                 self.minimap.update_subordinates_positions(self.formation_manager.get_subordinates())

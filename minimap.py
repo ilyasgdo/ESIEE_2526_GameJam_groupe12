@@ -120,9 +120,8 @@ class Minimap:
         self.player_pos = (x, y)
     
     def update_bot_position(self, x, y):
-        """Met à jour la position du bot (méthode conservée pour compatibilité)"""
-        # Cette méthode est conservée pour éviter les erreurs mais n'est plus utilisée
-        pass
+        """Met à jour la position du bot"""
+        self.bot_pos = (x, y)
     
     def update_ally_position(self, x, y):
         """Met à jour la position du bot allié"""
@@ -155,6 +154,13 @@ class Minimap:
         self.surface.blit(overlay, (0, 0))
         
         # Dessiner les entités en utilisant les positions stockées ou les objets passés
+        # Dessiner le bot en premier
+        if hasattr(self, 'bot_pos') or bot:
+            bot_x, bot_y = self.bot_pos if hasattr(self, 'bot_pos') else bot.position
+            self.draw_entity(self.surface, bot_x, bot_y, 
+                           self.bot_color, size=4, shape='square')
+        
+        # Dessiner l'ally bot
         if hasattr(self, 'ally_pos') or ally_bot:
             ally_x, ally_y = self.ally_pos if hasattr(self, 'ally_pos') else ally_bot.position
             self.draw_entity(self.surface, ally_x, ally_y, 
