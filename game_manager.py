@@ -198,6 +198,21 @@ class GameManager:
         if not is_moving:
             self.player.stop()
 
+        for obj in self.collisions:
+            top_left = (obj.x, obj.y)
+            bottom_left = (obj.x, obj.y + obj.height)
+            top_right = (obj.x + obj.width, obj.y)
+            bottom_right = (obj.x + obj.width, obj.y + obj.height)
+            player_position = self.player.position
+            # print(top_left, bottom_left, top_right, bottom_right)
+
+            if (player_position[0] >= top_left[0] and player_position[1] >= top_left[1]) and (
+                    player_position[0] >= bottom_left[0] and player_position[1] <= bottom_left[1]) and (
+                    player_position[0] <= top_right[0] and player_position[1] >= top_right[1]) and (
+                    player_position[0] <= bottom_right[0] and player_position[1] <= bottom_right[1]):
+                self.player.move_player_back()
+
+
     def handle_dialogue(self):
         """Gérer le passage au dialogue suivant ou démarrer un dialogue"""
         if self.dialogue_manager.is_active:
