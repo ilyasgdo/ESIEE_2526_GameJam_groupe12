@@ -116,13 +116,19 @@ class GameManager:
 
     def handle_input(self):
         pressed = pygame.key.get_pressed()
-
+        is_moving = False
         if pressed[pygame.K_z]:
             self.player.move_up()
+            is_moving = True
         if pressed[pygame.K_s]:
             self.player.move_down()
+            is_moving = True
         if pressed[pygame.K_q]:
             self.player.move_left()
+            is_moving = True
         if pressed[pygame.K_d]:
             self.player.move_right()
+            is_moving = True
+        if not is_moving:
+            self.player.stop()
 
