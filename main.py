@@ -43,6 +43,26 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                running = False
+            
+            #REMPLACER TOUCHE PAR D'AUTRE KEY OU EVENT Slotbar et bar de stun
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_f:
+                # Activer la boule de feu Slot 0 avec un cooldown de 5s
+                game_manager.ui.activate_hotbar_slot(0, 5)
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_g:
+                # Activer le Bear Trap Slot 1 avec un cooldown de 10s
+                game_manager.ui.activate_hotbar_slot(1, 10)
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_h:
+                # Activer le ???? Slot 2 avec un cooldown de 20s
+                game_manager.ui.activate_hotbar_slot(2, 20)
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_j:
+                # Activer la Tsar Bomba II Slot 3 avec un cooldown de 5s
+                game_manager.ui.activate_hotbar_slot(3, 45)
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_o:
+                # Déclencher un stun de 3 secondes (barre du haut)
+                game_manager.ui.start_stun(2.5)
+        
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False

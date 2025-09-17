@@ -15,6 +15,7 @@ from bot import Bot
 from ally_bot import AllyBot
 from minimap import Minimap
 from formation_manager import FormationManager
+from UIManager import UIManager
 
 class GameManager:
     """Gestionnaire principal du jeu"""
@@ -65,6 +66,8 @@ class GameManager:
         self.minimap = Minimap(self.screen, self.tmx_data, x=10, y=10, width=200, height=150)
 
         # centrer la camera sur le joueur
+        self.ui = UIManager(screen.get_size())
+        self.input_locked_for_ui = False  # si True, ignorer input joueur, CINEMATIQUE
 
         pygame.display.flip()
     
@@ -163,6 +166,8 @@ class GameManager:
             
             # Appeler la méthode update pour rafraîchir l'affichage
             self.minimap.update()
+        # Mise à jour de l'UI (timers, animations UI)
+        self.ui.update()
 
 
     def render(self):
@@ -175,6 +180,7 @@ class GameManager:
         if hasattr(self, 'minimap'):
             self.minimap.render()
             
+        self.ui.render(self.screen)
         pygame.display.flip()
 
     def handle_input(self):
