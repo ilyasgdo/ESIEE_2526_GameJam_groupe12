@@ -239,15 +239,15 @@ class GameManager:
 
     def render(self):
         """Rendu des entités du jeu"""
-        self.group.draw(self.screen)
-        self.fireballs.draw(self.screen)
+        if not self.dialogue_manager.is_active():
+            self.group.draw(self.screen)
+            self.fireballs.draw(self.screen)
+            # Rendre la minimap par-dessus le jeu
+            if hasattr(self, 'minimap'):
+                self.minimap.render()
+            self.ui.render(self.screen)
         self.dialogue_manager.draw(self.screen)
-        # Rendre la minimap par-dessus le jeu
-        if hasattr(self, 'minimap'):
-            self.minimap.render()
-            
-        self.ui.render(self.screen)
-        self.ui.render(self.screen)
+
         pygame.display.flip()
 
     def handle_input(self):

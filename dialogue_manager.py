@@ -12,7 +12,10 @@ class DialogueManager:
         self.dialogues = {}
         self.active_scene = None
         self.current_line = 0
-        self.is_active = False
+        self.active = False
+
+    def is_active(self):
+        return self.active 
 
     def load_from_file(self, filename):
         if os.path.exists(filename):
@@ -27,17 +30,17 @@ class DialogueManager:
         if scene_id in self.dialogues:
             self.active_scene = scene_id
             self.current_line = 0
-            self.is_active = True
+            self.active = True
         else:
             print(f"[DialogueManager] Aucune scène trouvée pour {scene_id}")
 
     def next_line(self):
-        if not self.is_active:
+        if not self.active:
             return
         self.current_line += 1
         if self.current_line >= len(self.dialogues[self.active_scene]):
             # Fin de la séquence
-            self.is_active = False
+            self.active = False
             self.active_scene = None
 
     def wrap_text(self, text, font, max_width):
@@ -58,7 +61,7 @@ class DialogueManager:
         return lines
 
     def draw(self, screen):
-        if not self.is_active:
+        if not self.active:
             return
 
         # Récupérer la réplique courante
