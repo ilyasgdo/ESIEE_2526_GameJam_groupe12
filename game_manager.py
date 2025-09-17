@@ -25,12 +25,12 @@ class GameManager:
         self.group = None
         self.tmx_data = None
         self.error_message = None
-        self.zoom = 4.0 
         # Initialisation du niveau
         self._init_level()
         self.group.draw(self.screen)
         player_position = self.spawn_position
         self.player = Player(player_position.x, player_position.y)
+
         self.group.add(self.player)
 
         # centrer la camera sur le joueur
@@ -82,7 +82,7 @@ class GameManager:
                 # Création du renderer
                 map_layer = pyscroll.orthographic.BufferedRenderer(map_data, self.screen.get_size())
                 print("Renderer créé")
-                
+                map_layer.zoom = 4.0
                 # Création du groupe
                 self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=3)
                 print("Groupe pyscroll créé")
@@ -125,3 +125,4 @@ class GameManager:
             self.player.move_left()
         if pressed[pygame.K_d]:
             self.player.move_right()
+

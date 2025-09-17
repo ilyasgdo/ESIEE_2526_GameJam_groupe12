@@ -25,6 +25,7 @@ def main():
     screen = pygame.display.set_mode(screen_size)
 
     pygame.display.set_caption("Bro thinks he's the main character 💀 - GameJam Groupe 12")
+
     
     # Horloge pour contrôler les FPS
     clock = pygame.time.Clock()
