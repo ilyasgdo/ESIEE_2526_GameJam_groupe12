@@ -10,6 +10,7 @@ class Player(pygame.sprite.Sprite):
         self.frame_index = 0
         self.animation_speed = 0.2
         self.current_direction = 'down'
+        self.old_position = self.position.copy()
 
         # Récupérer toutes les frames
         self.animations = {
@@ -18,6 +19,7 @@ class Player(pygame.sprite.Sprite):
             'right': self.load_row(1),
             'up': self.load_row(3)
         }
+        self.feet = pygame.Rect(0, 0, self.rect.width/2, 12)
 
         self.image = self.animations['down'][0]
         self.is_moving = False
@@ -29,6 +31,8 @@ class Player(pygame.sprite.Sprite):
     def load_row(self, row):
         """Charge une ligne de 4 frames à partir du sprite sheet"""
         return [self.get_image(col * 32, row * 32) for col in range(4)]
+
+    def save_location(self): self.old_position = self.position.copy()
 
     def change_animation(self, direction):
         if self.current_direction != direction:
@@ -63,7 +67,7 @@ class Player(pygame.sprite.Sprite):
 
     def update(self):
         self.rect.topleft = self.position
-
+        self.feet.move(self.rect.midbottom)
         if self.is_moving:
             self.frame_index += self.animation_speed
             if self.frame_index >= len(self.animations[self.current_direction]):
@@ -71,3 +75,8 @@ class Player(pygame.sprite.Sprite):
             self.image = self.animations[self.current_direction][int(self.frame_index)]
         else:
             self.image = self.animations[self.current_direction][0]
+
+    def move_back(self):
+        self.position = self.old_position
+        self.rect.topleft = self.position
+        self.feet.move(self.rect.midbottom)
