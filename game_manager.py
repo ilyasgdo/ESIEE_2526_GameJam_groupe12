@@ -82,7 +82,7 @@ class GameManager:
                 # Création du renderer
                 map_layer = pyscroll.orthographic.BufferedRenderer(map_data, self.screen.get_size())
                 print("Renderer créé")
-                map_layer.zoom = 4.0
+                map_layer.zoom = 2.0
                 # Création du groupe
                 self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=3)
                 print("Groupe pyscroll créé")
