@@ -11,6 +11,7 @@ import pytmx
 import pyscroll
 
 from player import Player
+from UIManager import UIManager
 
 class GameManager:
     """Gestionnaire principal du jeu"""
@@ -35,6 +36,8 @@ class GameManager:
 
         # centrer la camera sur le joueur
 
+        self.ui = UIManager(screen.get_size())
+        self.input_locked_for_ui = False  # si True, ignorer input joueur, CINEMATIQUE
 
         pygame.display.flip()
     
@@ -107,11 +110,14 @@ class GameManager:
         """Mise à jour des entités du jeu"""
         self.group.update()
         self.group.center(self.player.rect.center)
+        # Mise à jour de l'UI (timers, animations UI)
+        self.ui.update()
 
 
     def render(self):
         """Rendu des entités du jeu"""
         self.group.draw(self.screen)
+        self.ui.render(self.screen)
         pygame.display.flip()
 
     def handle_input(self):
