@@ -11,9 +11,7 @@ class Player(pygame.sprite.Sprite):
         self.frame_index = 0
         self.animation_speed = 0.2
         self.current_direction = 'down'
-<<<<<<< HEAD
         self.last_direction = 'down'  # Pour mémoriser la dernière direction prioritaire
-=======
         
         # Référence au bot allié pour la contrainte de distance
         self.ally_bot = None
@@ -23,8 +21,7 @@ class Player(pygame.sprite.Sprite):
         self.time_outside_range = 0  # Temps passé hors de portée (en millisecondes)
         self.max_time_outside = 3000  # 3 secondes avant attraction automatique
         self.auto_attraction_speed = 2  # Vitesse d'attraction automatique
-        self.is_being_attracted = False  # Flag pour l'attraction en cours  # Distance maximale autorisée
->>>>>>> de67555 (feat: add ally bot with movement constraints and minimap support)
+        self.is_being_attracted = False  # Flag pour l'attraction en cours
 
         # Récupérer toutes les frames
         self.animations = {
@@ -54,7 +51,6 @@ class Player(pygame.sprite.Sprite):
             self.current_direction = direction
             self.frame_index = 0
 
-<<<<<<< HEAD
     def determine_animation_direction(self):
         """Détermine quelle animation jouer en cas de mouvement diagonal"""
         # Priorité : horizontal > vertical (vous pouvez ajuster selon vos préférences)
@@ -68,31 +64,6 @@ class Player(pygame.sprite.Sprite):
             return 'down'
         return self.last_direction
 
-    def move_right(self): 
-        self.position[0] += self.speed
-        self.movement_directions['right'] = True
-        self.is_moving = True
-
-    def move_left(self): 
-        self.position[0] -= self.speed
-        self.movement_directions['left'] = True
-        self.is_moving = True
-
-    def move_up(self): 
-        self.position[1] -= self.speed
-        self.movement_directions['up'] = True
-        self.is_moving = True
-
-    def move_down(self): 
-        self.position[1] += self.speed
-        self.movement_directions['down'] = True
-        self.is_moving = True
-
-    def reset_movement_flags(self):
-        """Remet à zéro les flags de mouvement"""
-        for direction in self.movement_directions:
-            self.movement_directions[direction] = False
-=======
     def set_ally_bot(self, ally_bot):
         """Définit le bot allié pour la contrainte de distance"""
         self.ally_bot = ally_bot
@@ -134,6 +105,7 @@ class Player(pygame.sprite.Sprite):
         new_x = self.position[0] + self.speed
         if self.can_move_to(new_x, self.position[1]):
             self.position[0] = new_x
+            self.movement_directions['right'] = True
             self.change_animation('right')
             self.is_moving = True
 
@@ -141,6 +113,7 @@ class Player(pygame.sprite.Sprite):
         new_x = self.position[0] - self.speed
         if self.can_move_to(new_x, self.position[1]):
             self.position[0] = new_x
+            self.movement_directions['left'] = True
             self.change_animation('left')
             self.is_moving = True
 
@@ -148,6 +121,7 @@ class Player(pygame.sprite.Sprite):
         new_y = self.position[1] - self.speed
         if self.can_move_to(self.position[0], new_y):
             self.position[1] = new_y
+            self.movement_directions['up'] = True
             self.change_animation('up')
             self.is_moving = True
 
@@ -155,9 +129,14 @@ class Player(pygame.sprite.Sprite):
         new_y = self.position[1] + self.speed
         if self.can_move_to(self.position[0], new_y):
             self.position[1] = new_y
+            self.movement_directions['down'] = True
             self.change_animation('down')
             self.is_moving = True
->>>>>>> de67555 (feat: add ally bot with movement constraints and minimap support)
+
+    def reset_movement_flags(self):
+        """Remet à zéro les flags de mouvement"""
+        for direction in self.movement_directions:
+            self.movement_directions[direction] = False
         
     def stop(self):
         """Appelé quand aucune touche n'est pressée"""
@@ -188,12 +167,10 @@ class Player(pygame.sprite.Sprite):
             self.image = self.animations[self.current_direction][int(self.frame_index)]
         else:
             self.image = self.animations[self.current_direction][0]
-<<<<<<< HEAD
         
         # Remet à zéro les flags de mouvement après l'update
         # (ils seront réactivés lors du prochain appel aux méthodes move_*)
         self.reset_movement_flags()
-=======
     
     def update_attraction_system(self):
         """Met à jour le système d'attraction automatique"""
@@ -253,4 +230,3 @@ class Player(pygame.sprite.Sprite):
             if distance <= self.max_distance_from_ally * 0.8:  # 80% de la distance max
                 self.is_being_attracted = False
                 self.time_outside_range = 0
->>>>>>> b4a9f83 (feat(player): implement automatic ally attraction system)
