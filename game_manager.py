@@ -91,6 +91,12 @@ class GameManager:
                 tmx_data = pytmx.util_pygame.load_pygame(tmx_path)
                 self.tmx_data = tmx_data
                 self.spawn_position = tmx_data.get_object_by_name("player_spawn")
+
+                self.collisions = []
+                for obj in tmx_data.objects:
+                    if obj.name == "collision":
+                        self.collisions.append(obj)
+
                 print(f"TMX chargé - Dimensions: {self.tmx_data.width}x{self.tmx_data.height}")
                 print(f"Taille des tuiles: {self.tmx_data.tilewidth}x{self.tmx_data.tileheight}")
                 print(f"Nombre de couches: {len(self.tmx_data.layers)}")
@@ -111,7 +117,7 @@ class GameManager:
                 # Création du renderer
                 map_layer = pyscroll.orthographic.BufferedRenderer(map_data, self.screen.get_size())
                 print("Renderer créé")
-                map_layer.zoom = 4.0
+                map_layer.zoom = 2.0
                 # Création du groupe
                 self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=3)
                 print("Groupe pyscroll créé")
@@ -174,6 +180,8 @@ class GameManager:
         
         # Réinitialiser l'état de mouvement du joueur
         self.player.stop()
+
+        self.player.save_location()
 
         if pressed[pygame.K_z]:
             self.player.move_up()
