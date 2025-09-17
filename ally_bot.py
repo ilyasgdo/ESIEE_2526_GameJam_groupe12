@@ -10,9 +10,9 @@ class AllyBot(pygame.sprite.Sprite):
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [float(x), float(y)]
         self.old_position = self.position.copy()  # Pour la gestion des collisions
-        self.speed = 7  # Vitesse de déplacement
+        self.speed = 9  # Vitesse de déplacement
         self.frame_index = 0
-        self.animation_speed = 1
+        self.animation_speed = 0.2
         self.current_direction = 'down'
         
         # Référence au joueur (gardée pour la contrainte de distance du joueur)
@@ -74,7 +74,7 @@ class AllyBot(pygame.sprite.Sprite):
         # Variables pour l'IA autonome avec checkpoints
         self.state = "moving_to_checkpoint"   # États: "moving_to_checkpoint", "pausing", "avoiding_bot"
         self.state_timer = 0
-        self.pause_duration = 240  # 4 secondes à 60 FPS
+        self.pause_duration = 180  # 4 secondes à 60 FPS
         self.random_movement_timer = 0
         self.random_target_x = x
         self.random_target_y = y
@@ -98,7 +98,7 @@ class AllyBot(pygame.sprite.Sprite):
         self.micro_movement_y = 0
         self.hesitation_timer = 0
         self.is_hesitating = False
-        self.natural_speed_variation = 1.0
+        self.natural_speed_variation = 0.1
         self.breathing_timer = 0
         self.last_direction_change = 0
         
