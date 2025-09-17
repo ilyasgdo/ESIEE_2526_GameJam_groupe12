@@ -151,7 +151,7 @@ class Player(pygame.sprite.Sprite):
         self.image = self.animations[self.current_direction][0]
 
     def update(self):
-        self.rect.topleft = self.position
+        self.rect.center = self.position
         self.feet.move(self.rect.midbottom)
 
         # Gestion du système d'attraction automatique
