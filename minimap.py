@@ -38,6 +38,7 @@ class Minimap:
         self.player_color = (0, 255, 0, 255)  # Vert pour le joueur
         self.bot_color = (255, 100, 100, 255)  # Rouge/rose pour le bot
         self.ally_color = (100, 255, 100, 255)  # Vert clair pour le bot allié
+        self.subordinate_color = (150, 200, 255, 255)  # Bleu clair pour les subordonnés
         self.map_color = (80, 80, 90, 255)  # Couleur de base de la carte
         
         # Générer une représentation simplifiée de la carte
@@ -125,6 +126,12 @@ class Minimap:
     def update_ally_position(self, x, y):
         """Met à jour la position du bot allié"""
         self.ally_pos = (x, y)
+    
+    def update_subordinates_positions(self, subordinates_list):
+        """Met à jour les positions des subordonnés"""
+        self.subordinates_positions = []
+        for subordinate in subordinates_list:
+            self.subordinates_positions.append(subordinate.get_position())
 
     def update(self, player=None, bot=None, ally_bot=None):
         """
@@ -156,6 +163,12 @@ class Minimap:
             ally_x, ally_y = self.ally_pos if hasattr(self, 'ally_pos') else ally_bot.position
             self.draw_entity(self.surface, ally_x, ally_y, 
                            self.ally_color, size=4, shape='circle')
+        
+        # Dessiner les subordonnés
+        if hasattr(self, 'subordinates_positions'):
+            for sub_pos in self.subordinates_positions:
+                self.draw_entity(self.surface, sub_pos[0], sub_pos[1], 
+                               self.subordinate_color, size=3, shape='circle')
         
         if hasattr(self, 'player_pos') or player:
             player_x, player_y = self.player_pos if hasattr(self, 'player_pos') else player.position

@@ -14,6 +14,7 @@ from player import Player
 from bot import Bot
 from ally_bot import AllyBot
 from minimap import Minimap
+from formation_manager import FormationManager
 
 class GameManager:
     """Gestionnaire principal du jeu"""
@@ -44,6 +45,13 @@ class GameManager:
         
         # Définir la référence au bot allié pour le joueur (contrainte de distance)
         self.player.set_ally_bot(self.ally_bot)
+        
+        # Créer le gestionnaire de formation avec 5 subordonnés
+        self.formation_manager = FormationManager(self.ally_bot)
+        
+        # Ajouter tous les subordonnés au groupe de sprites
+        for subordinate in self.formation_manager.get_subordinates():
+            self.group.add(subordinate)
         
         # Créer le bot qui suit le joueur - spawn en bas à gauche de la carte
         bot_spawn_x = 100  # Position proche du bord gauche
@@ -129,11 +137,19 @@ class GameManager:
         self.group.update()
         self.group.center(self.player.rect.center)
         
+        # Mettre à jour le gestionnaire de formation
+        if hasattr(self, 'formation_manager'):
+            self.formation_manager.update()
+        
         # Mettre à jour la minimap avec les positions des entités
         if hasattr(self, 'minimap') and self.minimap:
             self.minimap.update_player_position(self.player.position[0], self.player.position[1])
             self.minimap.update_bot_position(self.bot.position[0], self.bot.position[1])
             self.minimap.update_ally_position(self.ally_bot.position[0], self.ally_bot.position[1])
+            
+            # Mettre à jour les positions des subordonnés
+            if hasattr(self, 'formation_manager'):
+                self.minimap.update_subordinates_positions(self.formation_manager.get_subordinates())
 
 
     def render(self):
