@@ -16,7 +16,6 @@ SCREEN_WIDTH = 1024
 SCREEN_HEIGHT = 768
 FPS = 60
 
-
 def main():
     """Point d'entrée principal du jeu"""
     # Initialisation de pygame
@@ -37,8 +36,7 @@ def main():
     game_manager = GameManager(screen)
 
     game_manager.dialogue_manager.start_scene("scene_intro")
-    
-        
+
     running = True
     while running:
         for event in pygame.event.get():
@@ -58,10 +56,11 @@ def main():
                     # Déléguer la gestion du dialogue au GameManager
                     game_manager.handle_dialogue()
         
+
         if not game_manager.dialogue_manager.is_active():
             # Gestion des touches en continu
             game_manager.handle_input()
-        
+
         # Mise à jour du jeu
         game_manager.update()
         # Rendu
