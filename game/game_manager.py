@@ -536,7 +536,6 @@ class GameManager:
     def handle_bomb(self, x, y):
         now = self.get_now()
         bomb = Bomb(x, y)
-        print(self.can_place_action(now, self.last_placed_bomb, bomb.countdown))
         if self.can_place_action(now, self.last_placed_bomb, bomb.countdown):
             TAB_ACTION.append(bomb)
             self.ui.activate_hotbar_slot(2, bomb.countdown / 1000)
