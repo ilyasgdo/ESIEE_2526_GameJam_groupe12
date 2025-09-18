@@ -342,7 +342,7 @@ class GameManager:
         bomb = Bomb(x, y)
         if self.can_place_action(now, self.last_placed_bomb, bomb.countdown):
             TAB_ACTION.append(bomb)
-            self.ui.activate_hotbar_slot(3, bomb.countdown / 1000)
+            self.ui.activate_hotbar_slot(2, bomb.countdown / 1000)
             self.group.add(bomb)
             self.last_placed_trap = now
             self.score += bomb.score
@@ -359,8 +359,6 @@ class GameManager:
         elif pressed[pygame.K_g]:
             self.handle_trap(x, y)
         elif pressed[pygame.K_h]:
-            self.ui.activate_hotbar_slot(2, 20)
-        elif pressed[pygame.K_j]:
             self.handle_bomb(x, y)
         elif pressed[pygame.K_o]:
             self.ui.start_stun(2.5)
