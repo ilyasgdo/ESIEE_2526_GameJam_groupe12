@@ -55,9 +55,9 @@ class GameManager:
         self.dialogue_manager = DialogueManager()
         self.dialogue_manager.load_from_file("assets/dialogues/scenes.json")
         self.fireballs = pygame.sprite.Group()
-        self.last_shot_time = 0
-        self.last_placed_trap = 0
-        self.last_placed_bomb = 0
+        self.last_shot_time = -1
+        self.last_placed_trap = -1
+        self.last_placed_bomb = -1
 
 
         # Créer le bot allié avec position initiale spécifique
@@ -499,6 +499,8 @@ class GameManager:
 
 
     def can_place_action(self, now, last, countdown):
+        if last == -1:
+            return True
         if now - last >= countdown:
             return True
         return False
@@ -518,7 +520,7 @@ class GameManager:
 
             self.fireballs.add(fireball)
             self.group.add(fireball)  # pyscroll la gère
-            self.last_shot_time = now
+            self.last_shot_time = self.get_now()
 
     def handle_trap(self, x, y):
         now = self.get_now()
@@ -527,18 +529,19 @@ class GameManager:
             TAB_ACTION.append(trap)
             self.ui.activate_hotbar_slot(1, trap.countdown/1000)
             self.group.add(trap)
-            self.last_placed_trap = now
+            self.last_placed_trap = self.get_now()
             self.score += 10
             self.score += trap.score
 
     def handle_bomb(self, x, y):
         now = self.get_now()
         bomb = Bomb(x, y)
+        print(self.can_place_action(now, self.last_placed_bomb, bomb.countdown))
         if self.can_place_action(now, self.last_placed_bomb, bomb.countdown):
             TAB_ACTION.append(bomb)
             self.ui.activate_hotbar_slot(2, bomb.countdown / 1000)
             self.group.add(bomb)
-            self.last_placed_trap = now
+            self.last_placed_bomb = self.get_now()
             self.score += bomb.score
 
     def handle_action(self, pressed):
