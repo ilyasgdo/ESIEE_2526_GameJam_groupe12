@@ -1,6 +1,7 @@
 # python
 import os
 import pygame
+from typing import Optional, Dict
 
 
 class MusicGame:
@@ -15,8 +16,8 @@ class MusicGame:
 
         self.music_volume = float(max(0.0, min(1.0, music_volume)))
         self.sfx_volume = float(max(0.0, min(1.0, sfx_volume)))
-        self._sfx_cache: dict[str, pygame.mixer.Sound] = {}
-        self._music_path: str | None = None
+        self._sfx_cache: Dict[str, pygame.mixer.Sound] = {}
+        self._music_path: Optional[str] = None
 
         self._running_channel = None
         self._running_sound = None
@@ -32,7 +33,7 @@ class MusicGame:
         self._music_path = path
         pygame.mixer.music.load(path)
 
-    def play_music(self, path: str | None = None, loop: int = -1, volume: float | None = None, fade_in: int = 0):
+    def play_music(self, path: Optional[str] = None, loop: int = -1, volume: Optional[float] = None, fade_in: int = 0):
         if path:
             self.load_music(path)
         if volume is not None:
@@ -68,7 +69,7 @@ class MusicGame:
         snd.set_volume(self.sfx_volume)
         self._sfx_cache[name] = snd
 
-    def play_sfx(self, key_or_path: str, volume: float | None = None):
+    def play_sfx(self, key_or_path: str, volume: Optional[float] = None):
         # key dans le cache ou chemin direct
         snd = self._sfx_cache.get(key_or_path)
         if snd is None:
