@@ -2,8 +2,11 @@ import pygame
 import math
 import random
 
+from actions.actions import check_trap
+
+
 class Bot(pygame.sprite.Sprite):
-    def __init__(self, x, y, ally_bot):
+    def __init__(self, x, y, ally_bot, game_manager):
         super().__init__()
         # Utiliser le même sprite sheet que le joueur mais avec une couleur différente
         self.sprite_sheet = pygame.image.load('assets/sprites/player/Hero.png').convert_alpha()
@@ -14,6 +17,7 @@ class Bot(pygame.sprite.Sprite):
         self.frame_index = 0
         self.animation_speed = 0.15
         self.current_direction = 'down'
+        self.game_manager = game_manager
         
         # Référence au bot allié à suivre (au lieu du joueur)
         self.ally_bot = ally_bot
@@ -441,6 +445,7 @@ class Bot(pygame.sprite.Sprite):
         
         # Mise à jour du mouvement
         self.update_movement()
+        check_trap(self)
         
         # Mise à jour de la position du rect
         self.rect.topleft = (int(self.position[0]), int(self.position[1]))

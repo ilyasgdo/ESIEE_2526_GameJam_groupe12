@@ -83,7 +83,7 @@ class GameManager:
         # Créer le bot qui suit le joueur - spawn en bas à gauche de la carte
         bot_spawn_x = 100  # Position proche du bord gauche
         bot_spawn_y = (self.tmx_data.height * self.tmx_data.tileheight) - 100  # Position proche du bord bas
-        self.bot = Bot(bot_spawn_x, bot_spawn_y, self.ally_bot)  # Le bot suit maintenant l'ally_bot
+        self.bot = Bot(bot_spawn_x, bot_spawn_y, self.ally_bot, self)  # Le bot suit maintenant l'ally_bot
         self.group.add(self.bot)
         
         # Établir la référence bidirectionnelle entre ally_bot et bot pour la détection de proximité
