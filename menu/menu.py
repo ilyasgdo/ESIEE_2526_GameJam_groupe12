@@ -2,12 +2,9 @@ import sys
 
 import pygame
 
-# Couleurs
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-GRAY = (50, 50, 50)
-BLUE = (0, 120, 255)
-RED = (200, 50, 50)
+from interface.color import WHITE, GRAY
+from menu.music import Music
+
 
 class Menu:
 
@@ -15,13 +12,23 @@ class Menu:
 
     def __init__(self, screen):
         """Boucle du menu principal"""
-
         self.SCREEN_WIDTH = screen.get_width()
         self.SCREEN_HEIGHT = screen.get_height()
         self.font = pygame.font.SysFont("arial", 40)
+        self.screen = screen
+        # Police personnalisée pour les boutons
+        try:
+            self.button_font = pygame.font.Font("assets/fonts/londrina.ttf", 40)
+            self.credits_font = pygame.font.Font("assets/fonts/londrina.ttf", 24)
+        except:
+            self.button_font = self.font  # Fallback à la police par défaut
+            self.credits_font = self.font
         self.play_button = pygame.Rect(self.SCREEN_WIDTH // 2 - 100, self.SCREEN_HEIGHT // 2 - 60, 200, 60)
         self.quit_button = pygame.Rect(self.SCREEN_WIDTH // 2 - 100, self.SCREEN_HEIGHT // 2 + 20, 200, 60)
-        self.screen = screen
+        self.music = Music(self.screen)
+        self.volume_button = self.music.draw_volume_button(self.screen, self.button_font)
+
+
 
     def run(self):
         running = True
@@ -33,10 +40,13 @@ class Menu:
 
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     if self.play_button.collidepoint(event.pos):
+                        self.music.stop_music()
                         return True  # Jouer
                     if self.quit_button.collidepoint(event.pos):
                         pygame.quit()
                         sys.exit()
+                    if self.volume_button.collidepoint(event.pos):
+                        self.music.toggle_music()
         return False
 
     def draw_menu(self):
@@ -62,17 +72,9 @@ class Menu:
             title = self.font.render("Bro thinks he's the main character", True, WHITE)
             self.screen.blit(title, (self.SCREEN_WIDTH // 2 - title.get_width() // 2, self.SCREEN_HEIGHT // 4))
 
-        # Police personnalisée pour les boutons
-        try:
-            button_font = pygame.font.Font("assets/fonts/londrina.ttf", 40)
-            credits_font = pygame.font.Font("assets/fonts/londrina.ttf", 24)
-        except:
-            button_font = self.font  # Fallback à la police par défaut
-            credits_font = self.font
-
         # Vérifier si la souris est sur un bouton pour le curseur
         mouse_pos = pygame.mouse.get_pos()
-        is_hovering = self.play_button.collidepoint(mouse_pos) or self.quit_button.collidepoint(mouse_pos)
+        is_hovering = self.play_button.collidepoint(mouse_pos) or self.quit_button.collidepoint(mouse_pos) or self.volume_button.collidepoint(mouse_pos)
 
         if is_hovering:
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
@@ -96,7 +98,7 @@ class Menu:
             pygame.draw.rect(self.screen, border_color, rect, width=2, border_radius=10)
 
             # Texte centré avec la police Londrina
-            text_surface = button_font.render(text, True, text_color)
+            text_surface = self.button_font.render(text, True, text_color)
             text_x = rect.x + rect.width // 2 - text_surface.get_width() // 2
             text_y = rect.y + rect.height // 2 - text_surface.get_height() // 2
             self.screen.blit(text_surface, (text_x, text_y))
@@ -112,12 +114,14 @@ class Menu:
 
         # Bouton Quitter avec les nouvelles couleurs
         draw_styled_button(self.quit_button, "Quitter", PURPLE_BUTTON, PURPLE_BUTTON_HOVER, WHITE)
+        draw_styled_button(self.volume_button, self.music.get_volume_button_text(), PURPLE_BUTTON, PURPLE_BUTTON_HOVER, WHITE)
 
         # Texte des créateurs en bas
         credits_text = "Clément GUERIN - Gabriel MINGOTAUD - Richard HO - Ilyas GHANDAOUI - Léo DESSERTENNE"
-        credits_surface = credits_font.render(credits_text, True, WHITE)
+        credits_surface = self.credits_font.render(credits_text, True, WHITE)
         credits_x = self.SCREEN_WIDTH // 2 - credits_surface.get_width() // 2
         credits_y = self.SCREEN_HEIGHT - 40  # 40 pixels du bas
         self.screen.blit(credits_surface, (credits_x, credits_y))
 
         pygame.display.flip()
+

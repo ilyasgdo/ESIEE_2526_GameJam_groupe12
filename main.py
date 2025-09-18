@@ -21,6 +21,7 @@ def main():
     """Point d'entrée principal du jeu"""
     # Initialisation de pygame
     pygame.init()
+    pygame.mixer.init()  # Initialiser le mixer pour la musique
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Bro thinks he's the main character 💀 - GameJam Groupe 12")
 
