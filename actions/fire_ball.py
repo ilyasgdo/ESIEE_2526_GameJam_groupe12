@@ -14,7 +14,7 @@ class FireBall(pygame.sprite.Sprite):
         self.frame_index = 0
         self.animation_speed = 0.2
         self.current_direction = direction
-        self.damage = 0.5
+        self.damage = 0.01
         self.active = True
         self.countdown = 5000
         self.score = 10

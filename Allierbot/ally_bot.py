@@ -14,7 +14,7 @@ class AllyBot(pygame.sprite.Sprite):
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [float(x), float(y)]
         self.old_position = self.position.copy()  # Pour la gestion des collisions
-        self.speed = 9  # Vitesse de déplacement
+        self.speed = 30  # Vitesse de déplacement
         self.frame_index = 0
         self.animation_speed = 0.2
         self.current_direction = 'down'
@@ -131,7 +131,6 @@ class AllyBot(pygame.sprite.Sprite):
         }
         
         # Appliquer une teinte différente pour distinguer le bot allié
-        self.apply_tint((200, 255, 200))  # Teinte verte
         
         self.image = self.animations['down'][0]
         self.is_moving = False

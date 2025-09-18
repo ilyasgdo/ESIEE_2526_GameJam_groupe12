@@ -14,7 +14,7 @@ class SubordinateBot(pygame.sprite.Sprite):
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [float(x), float(y)]
         self.old_position = self.position.copy()  # Pour la gestion des collisions
-        self.speed = 1.8  # Légèrement plus rapide pour rattraper le leader
+        self.speed = 15  # Légèrement plus rapide pour rattraper le leader
         self.frame_index = 0
         self.animation_speed = 0.15
         self.current_direction = 'up'
@@ -32,7 +32,7 @@ class SubordinateBot(pygame.sprite.Sprite):
         self.velocity_y = 0
         self.acceleration = 0.3
         self.friction = 0.85
-        self.max_speed = 3.0
+        self.max_speed = 15.0
         
         # Variables pour des mouvements plus naturels
         self.micro_movement_timer = 0
