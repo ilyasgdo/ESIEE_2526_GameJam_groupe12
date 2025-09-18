@@ -16,9 +16,6 @@
     { "character": "Héro", "line": "Quoi... ? Impossible !" },
     { "character": "Terreur du Crous", "line": "J'avais besoin d'un adversaire digne de moi ! Un héros à ma mesure ! Mes serviteurs t'ont offert l'opposition parfaite... et maintenant, tu es devenu l'ennemi que je méritais !" },
     { "character": "Héro", "line": "Manipulation ou pas... je vous arrêterai !" },
-    { "character": "Terreur du Crous", "line": "Nous verrons bien ! Que le meilleur gagne, héros... car grâce à mes brigands, tu es enfin devenu quelqu'un d'intéressant !" },
-
-    { "character": "Terreur du Crous", "line": "Quel combat magnifique... Mes serviteurs ont bien travaillé... Tu étais exactement l'adversaire... que j'espérais..." },
-    { "character": "narrator", "line": "Et ainsi se termine cette histoire... où même les brigands dans l'ombre ont joué leur rôle dans cette légende." }
+    { "character": "Terreur du Crous", "line": "Nous verrons bien ! Que le meilleur gagne, héros... car grâce à mes brigands, tu es enfin devenu quelqu'un d'intéressant !" }
   ]
 }
