@@ -20,6 +20,7 @@ from Allierbot.ally_bot import AllyBot
 from interface.minimap import Minimap
 from game.formation_manager import FormationManager
 from interface.UIManager import UIManager
+from interface.movement_zone_renderer import MovementZoneRenderer
 
 class GameManager:
     """Gestionnaire principal du jeu"""
@@ -74,6 +75,9 @@ class GameManager:
         # Établir la référence bidirectionnelle entre ally_bot et bot pour la détection de proximité
         self.ally_bot.set_bot_reference(self.bot)
         
+        # Établir la référence du hero bot pour que l'ally bot puisse lui tirer dessus
+        self.ally_bot.set_hero_bot_reference(self.bot)
+        
         # Configurer les objets de collision pour tous les bots
         self.ally_bot.set_collision_objects(self.collisions)
         self.bot.set_collision_objects(self.collisions)
@@ -88,6 +92,9 @@ class GameManager:
         # Créer l'UI Manager et initialiser les variables d'état
         self.ui = UIManager(screen.get_size())
         self.input_locked_for_ui = False  # si True, ignorer input joueur, CINEMATIQUE
+        
+        # Créer le renderer de zone de mouvement
+        self.movement_zone_renderer = MovementZoneRenderer()
 
         pygame.display.flip()
     
@@ -177,9 +184,13 @@ class GameManager:
         self.fireballs.update()
         # Vérifier les collisions projectile-héros
         self.check_projectile_hero_collision()
-        # Mettre à jour le gestionnaire de formation
+        # Mettre à jour le gestionnaire de formation avec les groupes de projectiles
         if hasattr(self, 'formation_manager'):
-            self.formation_manager.update()
+            self.formation_manager.update(self.fireballs, self.group)
+        
+        # Mettre à jour l'ally bot avec les groupes de projectiles pour le tir sur le hero bot
+        if hasattr(self, 'ally_bot'):
+            self.ally_bot.update(self.fireballs, self.group)
         
         # Mettre à jour la minimap avec les positions des entités
         if hasattr(self, 'minimap') and self.minimap:
@@ -256,6 +267,20 @@ class GameManager:
         if not self.dialogue_manager.is_active():
             self.group.draw(self.screen)
             self.fireballs.draw(self.screen)
+            
+            # Rendre la zone de mouvement du joueur autour de l'ally bot
+            self.movement_zone_renderer.render_movement_zone(
+                self.screen, 
+                self.player, 
+                self.ally_bot
+            )
+            
+            # Rendre les informations de distance
+            self.movement_zone_renderer.render_distance_info(
+                self.screen, 
+                self.player
+            )
+            
             # Rendre la minimap par-dessus le jeu
             if hasattr(self, 'minimap'):
                 self.minimap.render()

@@ -34,14 +34,14 @@ class FormationManager:
             subordinate = SubordinateBot(x, y, self.leader, angle, self.formation_radius)
             self.subordinates.append(subordinate)
     
-    def update_formation(self):
+    def update_formation(self, fireballs_group=None, group=None):
         """Met à jour la formation des subordonnés"""
         if not self.leader or not self.subordinates:
             return
         
         # Mettre à jour chaque subordonné avec la liste complète pour la séparation
         for subordinate in self.subordinates:
-            subordinate.update(self.subordinates)
+            subordinate.update(self.subordinates, fireballs_group, group)
     
     def adapt_to_leader_movement(self):
         """Adapte la formation aux mouvements du leader"""
@@ -74,10 +74,10 @@ class FormationManager:
             sprite_group.add(subordinate)
         return sprite_group
     
-    def update(self):
+    def update(self, fireballs_group=None, group=None):
         """Met à jour le gestionnaire de formation"""
         self.adapt_to_leader_movement()
-        self.update_formation()
+        self.update_formation(fireballs_group, group)
     
     def change_formation_type(self, formation_type):
         """Change le type de formation (pour extensions futures)"""
