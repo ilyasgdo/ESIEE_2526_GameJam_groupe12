@@ -543,8 +543,6 @@ class GameManager:
             self.ui.activate_hotbar_slot(2, 20)
         elif pressed[pygame.K_j]:
             self.ui.activate_hotbar_slot(3, 45)
-        elif pressed[pygame.K_o]:
-            self.ui.start_stun(2.5)
         elif pressed[pygame.K_SPACE]:
             self.handle_dialogue()
         # NEED TO BE REMOVED
