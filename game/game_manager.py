@@ -236,6 +236,11 @@ class GameManager:
             if hasattr(self, 'formation_manager'):
                 self.formation_manager.update(self.fireballs, self.group)
             
+            # Appeler la méthode update pour rafraîchir l'affichage
+            self.minimap.update()
+            # Mise à jour de l'UI (timers, animations UI)
+            self.ui.percentage_value = self.percentage  
+
             # Mettre à jour l'ally bot avec les groupes de projectiles pour le tir sur le hero bot
             if hasattr(self, 'ally_bot'):
                 self.ally_bot.update(self.fireballs, self.group)
