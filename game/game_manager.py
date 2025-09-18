@@ -10,6 +10,7 @@ import pytmx
 import pyscroll
 
 from actions.actions import TAB_ACTION
+from actions.bomb import Bomb
 from actions.trap import Trap
 from game.dialogue_manager import DialogueManager
 from actions.fire_ball import FireBall
@@ -45,6 +46,7 @@ class GameManager:
         self.fireballs = pygame.sprite.Group()
         self.last_shot_time = 0
         self.last_placed_trap = 0
+        self.last_placed_bomb = 0
 
         # Créer le bot allié avec position initiale spécifique
         ally_spawn_x = 786.67
@@ -216,7 +218,7 @@ class GameManager:
                     self.percentage = 100.0
                 
                 # Augmenter le score
-                self.score += 10
+                self.score += fireball.score
                 
                 # Message de debug
                 print(f"💥 Héros touché! Pourcentage: {self.percentage:.1f}% - Score: {self.score}")
@@ -333,7 +335,17 @@ class GameManager:
             self.ui.activate_hotbar_slot(1, trap.countdown/1000)
             self.group.add(trap)
             self.last_placed_trap = now
-            self.score += 10
+            self.score += trap.score
+
+    def handle_bomb(self, x, y):
+        now = self.get_now()
+        bomb = Bomb(x, y)
+        if self.can_place_action(now, self.last_placed_bomb, bomb.countdown):
+            TAB_ACTION.append(bomb)
+            self.ui.activate_hotbar_slot(2, bomb.countdown / 1000)
+            self.group.add(bomb)
+            self.last_placed_trap = now
+            self.score += bomb.score
 
     def handle_action(self, pressed):
         #Ajouter les autres actions
@@ -347,9 +359,7 @@ class GameManager:
         elif pressed[pygame.K_g]:
             self.handle_trap(x, y)
         elif pressed[pygame.K_h]:
-            self.ui.activate_hotbar_slot(2, 20)
-        elif pressed[pygame.K_j]:
-            self.ui.activate_hotbar_slot(3, 45)
+            self.handle_bomb(x, y)
         elif pressed[pygame.K_o]:
             self.ui.start_stun(2.5)
         elif pressed[pygame.K_SPACE]:
