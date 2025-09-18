@@ -36,7 +36,6 @@ def main():
     game_manager = GameManager(screen)
 
     game_manager.dialogue_manager.start_scene("scene_intro")
-
     running = True
     while running:
         for event in pygame.event.get():

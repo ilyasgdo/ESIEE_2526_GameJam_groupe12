@@ -123,7 +123,6 @@ class Player(pygame.sprite.Sprite):
         if self.can_move_to(new_x, self.position[1]):
             self.position[0] = new_x
             self.movement_directions['right'] = True
-            self.change_animation('right')
             self.is_moving = True
 
     def move_left(self): 
@@ -131,7 +130,6 @@ class Player(pygame.sprite.Sprite):
         if self.can_move_to(new_x, self.position[1]):
             self.position[0] = new_x
             self.movement_directions['left'] = True
-            self.change_animation('left')
             self.is_moving = True
 
     def move_up(self): 
@@ -139,7 +137,6 @@ class Player(pygame.sprite.Sprite):
         if self.can_move_to(self.position[0], new_y):
             self.position[1] = new_y
             self.movement_directions['up'] = True
-            self.change_animation('up')
             self.is_moving = True
 
     def move_down(self): 
@@ -147,7 +144,6 @@ class Player(pygame.sprite.Sprite):
         if self.can_move_to(self.position[0], new_y):
             self.position[1] = new_y
             self.movement_directions['down'] = True
-            self.change_animation('down')
             self.is_moving = True
 
     def reset_movement_flags(self):
