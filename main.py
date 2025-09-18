@@ -55,6 +55,9 @@ def main():
                     # Déléguer la gestion du dialogue au GameManager
                     game_manager.handle_dialogue()
         
+        # Vérifier si le jeu doit se fermer automatiquement
+        if game_manager.should_quit:
+            running = False
 
         if not game_manager.dialogue_manager.is_active():
             # Gestion des touches en continu

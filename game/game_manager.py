@@ -73,7 +73,29 @@ class GameManager:
         self.end_screen_result = None  # 'victory' ou 'defeat'
         self.end_screen_timer = 0
         self.end_screen_duration = 5000  # 5 secondes en millisecondes
-        # Définir la référence au bot allié pour le joueur (contrainte de distance)
+        self.should_quit = False  # Flag pour indiquer qu'il faut quitter le jeu
+        
+        # Zone de téléportation (rectangle défini par les coordonnées fournies)
+        self.teleport_zone = {
+            'x1': 285.67,  # Coin gauche
+            'y1': 677.67,  # Coin haut
+            'x2': 999.67,  # Coin droit
+            'y2': 908.67   # Coin bas
+        }
+        
+        # Positions de téléportation
+        self.teleport_positions = {
+            'ally_bot': (567.67, 284.67),
+            'bot': (735.67, 284.67),
+            'player': (651.67, 284.67)  # Position centrale entre les deux bots
+        }
+        
+        # Flag pour éviter les téléportations multiples
+        self.teleported = False
+        
+        # Variables pour le délai avant l'écran de fin
+        self.teleport_time = None
+        self.end_screen_delay = 3000  # 3 secondes en millisecondes
         self.player.set_ally_bot(self.ally_bot)
         
         # Créer le gestionnaire de formation avec 5 subordonnés
@@ -190,7 +212,7 @@ class GameManager:
             self.map_loaded = False
 
     def trigger_end_screen(self):
-        """Déclenche l'écran de fin avec un résultat aléatoire"""
+        """Déclenche l'écran de fin avec un résultat aléatoire (méthode legacy)"""
         if not self.game_ended:
             self.game_ended = True
             # Random entre victoire et défaite (50/50)
@@ -211,6 +233,29 @@ class GameManager:
             # Afficher le message dans l'UI
             self.ui.show('dialog', message)
 
+    def trigger_end_screen_with_percentage(self):
+        """Déclenche l'écran de fin basé sur le pourcentage de victoire de l'ally bot"""
+        if not self.game_ended:
+            self.game_ended = True
+            self.end_screen_timer = pygame.time.get_ticks()
+            
+            # Activer les barres cinématiques
+            self.ui.show('cinematic_bars')
+            
+            # Déterminer le résultat basé sur le pourcentage
+            # Si le pourcentage est >= 60%, c'est une victoire, sinon défaite
+            if self.percentage >= 70:
+                self.end_screen_result = 'victory'
+                print(f"🎉 VICTOIRE DU MÉCHANT! Pourcentage final: {self.percentage:.1f}% - Score: {self.score}")
+                message = f"VICTOIRE! Le méchant triomphe!\nPourcentage: {self.percentage:.1f}% - Score: {self.score}"
+            else:
+                self.end_screen_result = 'defeat'
+                print(f"😔 DÉFAITE DU MÉCHANT! Pourcentage final: {self.percentage:.1f}% - Score: {self.score}")
+                message = f"DÉFAITE! Le héros a gagné...\nPourcentage: {self.percentage:.1f}% - Score: {self.score}"
+            
+            # Afficher le message dans l'UI
+            self.ui.show('dialog', message)
+
     def get_percentage(self):
         """Retourne le pourcentage actuel"""
         return self.percentage
@@ -224,7 +269,8 @@ class GameManager:
         if self.game_ended:
             current_time = pygame.time.get_ticks()
             if current_time - self.end_screen_timer >= self.end_screen_duration:
-                self.reset_game()
+                print("🚪 Fermeture automatique du jeu après l'écran de fin...")
+                self.should_quit = True
                 return
         
         if not self.game_ended:
@@ -234,6 +280,17 @@ class GameManager:
             
             # Vérifier les collisions projectile-héros
             self.check_projectile_hero_collision()
+            
+            # Vérifier la zone de téléportation
+            self.check_teleport_zone()
+            
+            # Vérifier si le délai après téléportation est écoulé
+            if self.teleported and self.teleport_time is not None:
+                current_time = pygame.time.get_ticks()
+                if current_time - self.teleport_time >= self.end_screen_delay:
+                    print("⏰ Délai écoulé, déclenchement de l'écran de fin!")
+                    self.trigger_end_screen_with_percentage()
+                    self.teleport_time = None  # Réinitialiser pour éviter les appels multiples
             
             # Mettre à jour le gestionnaire de formation avec les groupes de projectiles
             if hasattr(self, 'formation_manager'):
@@ -316,6 +373,58 @@ class GameManager:
         if self.percentage > 100.0:
             self.percentage = 100.0
         print(f"Bonus de {bonus}%! Pourcentage: {old_percentage:.1f}% → {self.percentage:.1f}%")
+
+    def is_in_teleport_zone(self, x, y):
+        """Vérifie si une position est dans la zone de téléportation"""
+        return (self.teleport_zone['x1'] <= x <= self.teleport_zone['x2'] and
+                self.teleport_zone['y1'] <= y <= self.teleport_zone['y2'])
+
+    def check_teleport_zone(self):
+        """Vérifie si les bots ou le joueur sont dans la zone de téléportation et les téléporte si nécessaire"""
+        if self.teleported or self.game_ended:
+            return
+        
+        # Vérifier si l'ally bot est dans la zone
+        ally_in_zone = self.is_in_teleport_zone(self.ally_bot.position[0], self.ally_bot.position[1])
+        
+        # Vérifier si le bot est dans la zone
+        bot_in_zone = self.is_in_teleport_zone(self.bot.position[0], self.bot.position[1])
+        
+        # Vérifier si le joueur est dans la zone
+        player_in_zone = self.is_in_teleport_zone(self.player.position[0], self.player.position[1])
+        
+        # Si au moins un des trois est dans la zone, téléporter tous
+        if ally_in_zone or bot_in_zone or player_in_zone:
+            print("🌟 Zone de téléportation activée! Téléportation de tous les personnages...")
+            
+            # Téléporter l'ally bot
+            ally_pos = self.teleport_positions['ally_bot']
+            self.ally_bot.position[0] = ally_pos[0]
+            self.ally_bot.position[1] = ally_pos[1]
+            self.ally_bot.rect.center = (int(ally_pos[0]), int(ally_pos[1]))
+            
+            # Téléporter le bot
+            bot_pos = self.teleport_positions['bot']
+            self.bot.position[0] = bot_pos[0]
+            self.bot.position[1] = bot_pos[1]
+            self.bot.rect.center = (int(bot_pos[0]), int(bot_pos[1]))
+            
+            # Téléporter le joueur
+            player_pos = self.teleport_positions['player']
+            self.player.position[0] = player_pos[0]
+            self.player.position[1] = player_pos[1]
+            self.player.rect.center = (int(player_pos[0]), int(player_pos[1]))
+            
+            # Marquer comme téléporté pour éviter les téléportations multiples
+            self.teleported = True
+            
+            # Enregistrer le temps de téléportation pour le délai
+            self.teleport_time = pygame.time.get_ticks()
+            
+            print(f"✅ Ally bot téléporté à: ({ally_pos[0]}, {ally_pos[1]})")
+            print(f"✅ Bot téléporté à: ({bot_pos[0]}, {bot_pos[1]})")
+            print(f"✅ Joueur téléporté à: ({player_pos[0]}, {player_pos[1]})")
+            print("⏳ Attente de 3 secondes avant l'écran de fin...")
 
 
     def render(self):
@@ -418,6 +527,10 @@ class GameManager:
         self.end_screen_result = None
         self.percentage = 50.0
         self.score = 0
+        
+        # Réinitialiser le flag de téléportation
+        self.teleported = False
+        self.teleport_time = None
         
         # Cacher les éléments UI de fin
         self.ui.hide('cinematic_bars')

@@ -13,7 +13,7 @@ class Bot(pygame.sprite.Sprite):
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [float(x), float(y)]
         self.old_position = self.position.copy()  # Pour la gestion des collisions
-        self.speed = 3 # Légèrement plus lent que le joueur
+        self.speed = 999 # Légèrement plus lent que le joueur
         self.frame_index = 0
         self.animation_speed = 0.15
         self.current_direction = 'down'
@@ -118,19 +118,18 @@ class Bot(pygame.sprite.Sprite):
         self.state_timer = 0
         self.state_change_interval = 180  # Changer d'état toutes les 3 secondes (60 FPS)
         
-        # Nouveaux timers pour le comportement temporisé
-        self.orbit_duration = 600  # 10 secondes à 60 FPS (10 * 60)
-        self.wait_duration = 600   # 10 secondes d'attente à 60 FPS (10 * 60)
-        self.orbit_timer = 0       # Timer pour compter le temps d'orbite
-        self.wait_timer = 0        # Timer pour compter le temps d'attente
+        self.orbit_duration = 600 
+        self.wait_duration = 600  
+        self.orbit_timer = 0       
+        self.wait_timer = 0        
         
         # Variables pour mouvement fluide
         self.target_x = x
         self.target_y = y
         self.velocity_x = 0
         self.velocity_y = 0
-        self.acceleration = 0.75  # Augmenté de 0.3 à 1.5
-        self.friction = 0.95     # Augmenté de 0.85 à 0.95 (moins de friction)
+        self.acceleration = 4 
+        self.friction = 0.95     
         
         # Variables pour des mouvements plus naturels
         self.micro_movement_timer = 0
