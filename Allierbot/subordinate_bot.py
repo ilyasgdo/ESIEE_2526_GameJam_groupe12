@@ -30,7 +30,7 @@ class SubordinateBot(pygame.sprite.Sprite):
         # Variables pour mouvement fluide
         self.velocity_x = 0
         self.velocity_y = 0
-        self.acceleration = 0.3
+        self.acceleration = 0.6
         self.friction = 0.85
         self.max_speed = 15.0
         

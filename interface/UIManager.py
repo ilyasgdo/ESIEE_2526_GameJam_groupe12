@@ -203,7 +203,7 @@ class UIManager:
         if hasattr(self, "percentage_value"):  # On affiche seulement si défini
             # Texte principal
             title = "Chance pour la Terreur du CROUS de gagner :"
-            value = f"{self.percentage_value:.1f} %"
+            value = f"{self.percentage_value:.2f} %"
 
             # Choisir une police plus grande
             big_font = pygame.font.Font(None, 40)   # plus gros pour la valeur
