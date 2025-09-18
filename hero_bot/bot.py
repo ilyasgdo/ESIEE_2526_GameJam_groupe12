@@ -128,7 +128,7 @@ class Bot(pygame.sprite.Sprite):
         self.target_y = y
         self.velocity_x = 0
         self.velocity_y = 0
-        self.acceleration = 4 
+        self.acceleration = 0.6
         self.friction = 0.95     
         
         # Variables pour des mouvements plus naturels
