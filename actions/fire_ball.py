@@ -6,8 +6,7 @@ class FireBall(pygame.sprite.Sprite):
     def __init__(self, x, y, direction, speed=6, spread_angle=15):
         super().__init__()
         # Charger le sprite sheet de la boule de feu
-        self.sprite_sheet = pygame.image.load('assets/sprites/effects/All_Fire_Bullet_Pixel_16x16.png').convert_alpha()
-
+        self.sprite_sheet = pygame.image.load('./assets/sprites/effects/All_Fire_Bullet_Pixel_16x16.png').convert_alpha()
         self.rect = pygame.Rect(x, y, 16, 16)
         self.pos = [x, y]
 
@@ -15,6 +14,9 @@ class FireBall(pygame.sprite.Sprite):
         self.frame_index = 0
         self.animation_speed = 0.2
         self.current_direction = direction
+        self.damage = 0.5
+        self.active = True
+        self.countdown = 5000
 
         # Déterminer l’angle avec un petit cône aléatoire
         base_angle = {"up": -90, "down": 90, "left": 180, "right": 0}.get(direction, 0)
@@ -58,3 +60,4 @@ class FireBall(pygame.sprite.Sprite):
         if (self.pos[0] < -2000 or self.pos[0] > 20000 or
             self.pos[1] < -2000 or self.pos[1] > 20000):
             self.kill()
+

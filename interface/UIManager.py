@@ -46,18 +46,18 @@ class UIManager:
         # charger et griser une icône comme si utilisé
         # (voir méthode _load_icon_with_grey plus bas)
         trap_icon, trap_icon_grey = self._load_icon_with_grey(
-            'traps/Bear_Trap.png',
+            './traps/Bear_Trap.png',
             (0, 0, 32, 32),
             (self.hotbar_slot_size - 16, self.hotbar_slot_size - 16)
         )
         bomb_crop = (0, 48, 32, 15)
         bomb_icon, bomb_icon_grey = self._load_icon_with_grey(
-            'traps/00 All_Rocket.png',
+            './traps/00 All_Rocket.png',
             bomb_crop,
             (self.hotbar_slot_size - 16, self.hotbar_slot_size - 16)
         )
         fire_icon, fire_icon_grey = self._load_icon_with_grey(
-            'traps/All_Fire_Bullet_Pixel_16x16_00.png',
+            './traps/All_Fire_Bullet_Pixel_16x16_00.png',
             (449, 200, 32, 16),
             (self.hotbar_slot_size - 16, self.hotbar_slot_size - 16)
         )
@@ -66,7 +66,7 @@ class UIManager:
         # Slot 0 (index 0) -> Fire Bullet
         # Slot 1 (index 2) -> Dragon Fire Breath
         fire_thrower_icon, fire_thrower_icon_grey = self._load_icon_with_grey(
-            'assets/UI/DragonFireBreathTraps.png',
+            './assets/UI/DragonFireBreathTraps.png',
             None,
             (self.hotbar_slot_size - 16, self.hotbar_slot_size - 16)
         )
@@ -118,7 +118,7 @@ class UIManager:
         self.stun_frame_height = 8
         # Chargement des images de la barre de stun
         try:
-            sheet = pygame.image.load('assets/UI/07.png').convert_alpha()
+            sheet = pygame.image.load('./assets/UI/07.png').convert_alpha()
             if self.stun_manual_base_rect and self.stun_manual_overlay_rects:
                 b = pygame.Rect(self.stun_manual_base_rect)
                 self.stun_base_frame = sheet.subsurface(b).copy()
@@ -393,7 +393,7 @@ class UIManager:
         overlay_rects: liste de tuples (x, y, w, h) pour les frames d'overlay
         """
         try:
-            sheet = pygame.image.load('assets/UI/07.png').convert_alpha()
+            sheet = pygame.image.load('./assets/UI/07.png').convert_alpha()
             b = pygame.Rect(base_rect)
             self.stun_base_frame = sheet.subsurface(b).copy()
             self.stun_overlay_frames = []

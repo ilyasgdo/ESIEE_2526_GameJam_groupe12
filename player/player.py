@@ -4,7 +4,7 @@ import math
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
-        self.sprite_sheet = pygame.image.load('assets/sprites/player/FOXSPRITESHEET.png').convert_alpha()
+        self.sprite_sheet = pygame.image.load('./assets/sprites/player/FOXSPRITESHEET.png').convert_alpha()
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [x, y]
         self.speed = 3

@@ -6,7 +6,7 @@ class AllyBot(pygame.sprite.Sprite):
     def __init__(self, x, y, player):
         super().__init__()
         # Utiliser le même sprite sheet que le joueur mais avec une couleur différente
-        self.sprite_sheet = pygame.image.load('assets/sprites/player/BIRDSPRITESHEET_Blue.png').convert_alpha()
+        self.sprite_sheet = pygame.image.load('./assets/sprites/player/BIRDSPRITESHEET_Blue.png').convert_alpha()
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [float(x), float(y)]
         self.old_position = self.position.copy()  # Pour la gestion des collisions
