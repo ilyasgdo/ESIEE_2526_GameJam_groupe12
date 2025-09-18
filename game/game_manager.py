@@ -20,7 +20,9 @@ from Allierbot.ally_bot import AllyBot
 from interface.minimap import Minimap
 from game.formation_manager import FormationManager
 from interface.UIManager import UIManager
+from game.music_game import MusicGame
 from interface.movement_zone_renderer import MovementZoneRenderer
+
 
 class GameManager:
     """Gestionnaire principal du jeu"""
@@ -35,11 +37,18 @@ class GameManager:
         self.group = None
         self.tmx_data = None
         self.error_message = None
+
+        # Musique
+        self.music = MusicGame(music_volume=0.5)
+
         # Initialisation du niveau
         self._init_level()
         self.group.draw(self.screen)
         player_position = self.spawn_position
         self.player = Player(player_position.x, player_position.y)
+
+        self.player = Player(player_position.x, player_position.y)
+        self.player.set_audio(self.music)
 
         self.group.add(self.player)
         self.dialogue_manager = DialogueManager()
@@ -157,7 +166,10 @@ class GameManager:
                 # Création du groupe
                 self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=3)
                 print("Groupe pyscroll créé")
-                
+
+                # Démarrer la musique de fond
+                self.music.play_music('assets/musics/game_music.ogg', loop=-1, volume=0.2, fade_in=1000)
+
                 self.map_loaded = True
                 print("Carte chargée avec succès!")
                 
