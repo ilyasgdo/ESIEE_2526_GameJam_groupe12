@@ -25,6 +25,9 @@ class Player(pygame.sprite.Sprite):
         self.auto_attraction_speed = 2  # Vitesse d'attraction automatique
         self.is_being_attracted = False  # Flag pour l'attraction en cours
 
+        self.audio = None
+        self._was_moving = False
+
         # Récupérer toutes les frames
         self.animations = {
             'down': self.load_row(5),
@@ -50,6 +53,9 @@ class Player(pygame.sprite.Sprite):
         return [self.get_image(col * 32, row * 32) for col in range(4)]
 
     def save_location(self): self.old_position = self.position.copy()
+
+    def set_audio(self, audio_manager):
+        self.audio = audio_manager
 
     def change_animation(self, direction):
         if self.current_direction != direction:
@@ -185,6 +191,16 @@ class Player(pygame.sprite.Sprite):
             self.image = self.animations[self.current_direction][int(self.frame_index)]
         else:
             self.image = self.animations[self.current_direction][0]
+
+        moving_now = self.is_moving
+        if self.audio:
+            if moving_now and not self._was_moving:
+                # Démarre le son quand on commence à bouger
+                self.audio.start_running_sound('assets/musics/running_sound.ogg', volume=0.5)
+            elif not moving_now and self._was_moving:
+                # Coupe le son quand on s'arrête
+                self.audio.stop_running_sound(fade_out=80)
+        self._was_moving = moving_now
 
     def move_player_back(self):
         self.position = self.old_position
