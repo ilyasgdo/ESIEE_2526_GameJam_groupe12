@@ -3,13 +3,14 @@ import math
 import random
 import time
 from actions.fire_ball import FireBall
+from actions.bomb import Bomb
 from actions.actions import TAB_ACTION
 
 class AllyBot(pygame.sprite.Sprite):
     def __init__(self, x, y, player):
         super().__init__()
         # Utiliser le même sprite sheet que le joueur mais avec une couleur différente
-        self.sprite_sheet = pygame.image.load('assets/sprites/player/Hero.png').convert_alpha()
+        self.sprite_sheet = pygame.image.load('./assets/sprites/player/BigBoss.png').convert_alpha()
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [float(x), float(y)]
         self.old_position = self.position.copy()  # Pour la gestion des collisions
@@ -93,6 +94,11 @@ class AllyBot(pygame.sprite.Sprite):
         self.last_shot_time = 0  # Temps du dernier tir
         self.shot_interval = 4.0  # Intervalle de 4 secondes entre les tirs
         self.is_shooting_at_hero = False  # État de tir sur le hero
+        
+        # Variables pour le système de lancement de bombes
+        self.last_bomb_time = 0  # Temps du dernier lancement de bombe
+        self.bomb_interval = 8.0  # Intervalle de 8 secondes entre les bombes
+        self.bomb_probability = 0.3  # 30% de probabilité de lancer une bombe au lieu d'une boule de feu
         
         # Variables pour mouvement fluide
         self.target_x = x
@@ -439,8 +445,26 @@ class AllyBot(pygame.sprite.Sprite):
         # Mettre à jour le temps du dernier tir
         self.last_shot_time = time.time()
 
+    def launch_bomb_at_hero(self, group):
+        """Lance une bombe vers le hero bot"""
+        if not self.hero_bot_reference or not group:
+            return
+        
+        # Créer la bombe à la position actuelle
+        bomb = Bomb(
+            self.position[0] + 16,  # Centre du sprite
+            self.position[1] + 16   # Centre du sprite
+        )
+        
+        # Ajouter la bombe aux groupes
+        TAB_ACTION.append(bomb)
+        group.add(bomb)
+        
+        # Mettre à jour le temps du dernier lancement de bombe
+        self.last_bomb_time = time.time()
+
     def handle_hero_shooting(self, fireballs_group, group):
-        """Gère le système de tir sur le hero bot"""
+        """Gère le système de tir sur le hero bot avec possibilité de lancer des bombes"""
         if not self.hero_bot_reference:
             return
         
@@ -453,7 +477,14 @@ class AllyBot(pygame.sprite.Sprite):
             
             # Vérifier si assez de temps s'est écoulé depuis le dernier tir
             if current_time - self.last_shot_time >= self.shot_interval:
-                self.shoot_at_hero(fireballs_group, group)
+                # Décider entre bombe et boule de feu
+                if (current_time - self.last_bomb_time >= self.bomb_interval and 
+                    random.random() < self.bomb_probability):
+                    # Lancer une bombe
+                    self.launch_bomb_at_hero(group)
+                else:
+                    # Tirer une boule de feu
+                    self.shoot_at_hero(fireballs_group, group)
         else:
             self.is_shooting_at_hero = False
 
