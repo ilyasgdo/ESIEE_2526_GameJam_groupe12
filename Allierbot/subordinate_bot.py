@@ -1,12 +1,16 @@
 import pygame
 import math
 import random
+from actions.fire_ball import FireBall
+from actions.bomb import Bomb
+from actions.trap import Trap
+from actions.actions import TAB_ACTION
 
 class SubordinateBot(pygame.sprite.Sprite):
     def __init__(self, x, y, leader, formation_angle, formation_radius=60):
         super().__init__()
         # Utiliser le même sprite sheet que le joueur mais avec une couleur différente
-        self.sprite_sheet = pygame.image.load('assets/sprites/player/Sousfifre.png').convert_alpha()
+        self.sprite_sheet = pygame.image.load('./assets/sprites/player/Sousfifre.png').convert_alpha()
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [float(x), float(y)]
         self.old_position = self.position.copy()  # Pour la gestion des collisions
@@ -71,6 +75,11 @@ class SubordinateBot(pygame.sprite.Sprite):
         
         # Système de collision avec les objets TMX
         self.collision_objects = []
+        
+        # Variables pour le système de tir et piège aléatoire
+        self.last_action_time = pygame.time.get_ticks()
+        self.action_interval = 10000  # 10 secondes en millisecondes
+        self.action_probability = 0.5  # 50% de probabilité d'effectuer une action
         
         # Récupérer toutes les frames (même système que le joueur)
         self.animations = {
@@ -381,12 +390,65 @@ class SubordinateBot(pygame.sprite.Sprite):
         
         return separation_x, separation_y
 
-    def update(self, subordinates_list=None):
+    def handle_random_action(self, fireballs_group, group):
+        """Gère les actions aléatoires (tir, bombe ou piège) toutes les 10 secondes avec 50% de probabilité"""
+        current_time = pygame.time.get_ticks()
+        
+        # Vérifier si 10 secondes se sont écoulées
+        if current_time - self.last_action_time >= self.action_interval:
+            # 50% de probabilité d'effectuer une action
+            if random.random() < self.action_probability:
+                # Choisir aléatoirement entre tir (0), bombe (1) et piège (2)
+                action_choice = random.randint(0, 2)
+                
+                if action_choice == 0:
+                    # Tirer une boule de feu
+                    self.shoot_fireball(fireballs_group, group)
+                elif action_choice == 1:
+                    # Lancer une bombe
+                    self.launch_bomb(group)
+                else:
+                    # Poser un piège
+                    self.place_trap(group)
+            
+            # Réinitialiser le timer
+            self.last_action_time = current_time
+
+    def shoot_fireball(self, fireballs_group, group):
+        """Tire une boule de feu dans la direction actuelle"""
+        fireball = FireBall(
+            self.position[0] + 16,  # Centre du sprite
+            self.position[1] + 16,
+            self.current_direction
+        )
+        fireballs_group.add(fireball)
+        group.add(fireball)
+
+    def launch_bomb(self, group):
+        """Lance une bombe à la position actuelle"""
+        bomb = Bomb(
+            self.position[0] + 16,  # Centre du sprite
+            self.position[1] + 16   # Centre du sprite
+        )
+        TAB_ACTION.append(bomb)
+        group.add(bomb)
+
+    def place_trap(self, group):
+        """Place un piège à la position actuelle"""
+        trap = Trap(self.position[0], self.position[1])
+        TAB_ACTION.append(trap)
+        group.add(trap)
+
+    def update(self, subordinates_list=None, fireballs_group=None, group=None):
         """Met à jour le subordonné"""
         # Mettre à jour le mouvement de formation
         if subordinates_list is None:
             subordinates_list = []
         self.update_formation_movement(subordinates_list)
+        
+        # Gérer les actions aléatoires si les groupes sont fournis
+        if fireballs_group is not None and group is not None:
+            self.handle_random_action(fireballs_group, group)
         
         # Mettre à jour la position du rectangle
         self.rect.topleft = self.position

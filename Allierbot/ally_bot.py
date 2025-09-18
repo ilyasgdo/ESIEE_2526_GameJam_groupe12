@@ -1,12 +1,16 @@
 import pygame
 import math
 import random
+import time
+from actions.fire_ball import FireBall
+from actions.bomb import Bomb
+from actions.actions import TAB_ACTION
 
 class AllyBot(pygame.sprite.Sprite):
     def __init__(self, x, y, player):
         super().__init__()
         # Utiliser le même sprite sheet que le joueur mais avec une couleur différente
-        self.sprite_sheet = pygame.image.load('assets/sprites/player/Hero.png').convert_alpha()
+        self.sprite_sheet = pygame.image.load('./assets/sprites/player/BigBoss.png').convert_alpha()
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [float(x), float(y)]
         self.old_position = self.position.copy()  # Pour la gestion des collisions
@@ -84,6 +88,18 @@ class AllyBot(pygame.sprite.Sprite):
         self.bot_avoidance_distance = 120  # Distance pour s'éloigner du bot
         self.bot_reference = None  # Sera défini plus tard
         
+        # Variables pour le système de tir sur le hero bot
+        self.hero_bot_reference = None  # Référence au hero bot
+        self.hero_detection_distance = 100  # Distance pour détecter le hero bot
+        self.last_shot_time = 0  # Temps du dernier tir
+        self.shot_interval = 4.0  # Intervalle de 4 secondes entre les tirs
+        self.is_shooting_at_hero = False  # État de tir sur le hero
+        
+        # Variables pour le système de lancement de bombes
+        self.last_bomb_time = 0  # Temps du dernier lancement de bombe
+        self.bomb_interval = 8.0  # Intervalle de 8 secondes entre les bombes
+        self.bomb_probability = 0.3  # 30% de probabilité de lancer une bombe au lieu d'une boule de feu
+        
         # Variables pour mouvement fluide
         self.target_x = x
         self.target_y = y
@@ -102,6 +118,7 @@ class AllyBot(pygame.sprite.Sprite):
         self.breathing_timer = 0
         self.last_direction_change = 0
         
+       
         # Système de collision avec les objets TMX
         self.collision_objects = []
         
@@ -306,10 +323,14 @@ class AllyBot(pygame.sprite.Sprite):
             elif self.velocity_y < -0.1:
                 self.change_animation('up')
 
-    def update(self):
+    def update(self, fireballs_group=None, group=None):
         """Mise à jour principale du bot allié"""
         self.update_ai()
         self.update_movement()
+        
+        # Gérer le système de tir sur le hero bot
+        if fireballs_group and group:
+            self.handle_hero_shooting(fireballs_group, group)
         
         # Mettre à jour le rect
         self.rect.center = (int(self.position[0]), int(self.position[1]))
@@ -366,6 +387,106 @@ class AllyBot(pygame.sprite.Sprite):
     def set_bot_reference(self, bot):
         """Définir la référence au bot principal pour la détection de proximité"""
         self.bot_reference = bot
+
+    def set_hero_bot_reference(self, hero_bot):
+        """Définir la référence au hero bot pour le système de tir"""
+        self.hero_bot_reference = hero_bot
+
+    def get_distance_to_hero_bot(self):
+        """Calcule la distance au hero bot"""
+        if not self.hero_bot_reference:
+            return float('inf')
+        hero_pos = self.hero_bot_reference.position
+        dx = self.position[0] - hero_pos[0]
+        dy = self.position[1] - hero_pos[1]
+        return math.sqrt(dx*dx + dy*dy)
+
+    def get_angle_to_hero_bot(self):
+        """Calcule l'angle vers le hero bot"""
+        if not self.hero_bot_reference:
+            return 0
+        hero_pos = self.hero_bot_reference.position
+        dx = hero_pos[0] - self.position[0]
+        dy = hero_pos[1] - self.position[1]
+        return math.atan2(dy, dx)
+
+    def shoot_at_hero(self, fireballs_group, group):
+        """Tire une boule de feu vers le hero bot"""
+        if not self.hero_bot_reference or not fireballs_group or not group:
+            return
+        
+        # Calculer la direction vers le hero bot
+        angle = self.get_angle_to_hero_bot()
+        
+        # Convertir l'angle en direction textuelle pour FireBall
+        angle_degrees = math.degrees(angle) % 360
+        if 315 <= angle_degrees or angle_degrees < 45:
+            direction = "right"
+        elif 45 <= angle_degrees < 135:
+            direction = "down"
+        elif 135 <= angle_degrees < 225:
+            direction = "left"
+        else:
+            direction = "up"
+        
+        # Créer la boule de feu avec les paramètres corrects
+        fireball = FireBall(
+            self.position[0] + 16,  # Centre du sprite
+            self.position[1] + 16,  # Centre du sprite
+            direction,  # Direction textuelle au lieu de l'angle numérique
+            speed=8,  # Vitesse de la boule de feu
+            spread_angle=5  # Petit angle de dispersion
+        )
+        
+        # Ajouter la boule de feu aux groupes
+        fireballs_group.add(fireball)
+        group.add(fireball)
+        
+        # Mettre à jour le temps du dernier tir
+        self.last_shot_time = time.time()
+
+    def launch_bomb_at_hero(self, group):
+        """Lance une bombe vers le hero bot"""
+        if not self.hero_bot_reference or not group:
+            return
+        
+        # Créer la bombe à la position actuelle
+        bomb = Bomb(
+            self.position[0] + 16,  # Centre du sprite
+            self.position[1] + 16   # Centre du sprite
+        )
+        
+        # Ajouter la bombe aux groupes
+        TAB_ACTION.append(bomb)
+        group.add(bomb)
+        
+        # Mettre à jour le temps du dernier lancement de bombe
+        self.last_bomb_time = time.time()
+
+    def handle_hero_shooting(self, fireballs_group, group):
+        """Gère le système de tir sur le hero bot avec possibilité de lancer des bombes"""
+        if not self.hero_bot_reference:
+            return
+        
+        distance_to_hero = self.get_distance_to_hero_bot()
+        current_time = time.time()
+        
+        # Vérifier si le hero bot est à portée
+        if distance_to_hero <= self.hero_detection_distance:
+            self.is_shooting_at_hero = True
+            
+            # Vérifier si assez de temps s'est écoulé depuis le dernier tir
+            if current_time - self.last_shot_time >= self.shot_interval:
+                # Décider entre bombe et boule de feu
+                if (current_time - self.last_bomb_time >= self.bomb_interval and 
+                    random.random() < self.bomb_probability):
+                    # Lancer une bombe
+                    self.launch_bomb_at_hero(group)
+                else:
+                    # Tirer une boule de feu
+                    self.shoot_at_hero(fireballs_group, group)
+        else:
+            self.is_shooting_at_hero = False
 
     def update_ai(self):
         """Mise à jour de l'intelligence artificielle du bot avec système de checkpoints"""
