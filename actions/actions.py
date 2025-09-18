@@ -27,6 +27,7 @@ def check_trap(hero):
         if hero_x < trap_top[0] and hero_x < trap_top[1] and hero_x > trap_bottom[0] and hero_y > trap_bottom[1] and action.active:
             action.active = False
             hero.game_manager.percentage += action.damage
+            hero.game_manager.group.remove(action)
             #TAB_ACTION.pop(i)
 
 
@@ -42,7 +43,6 @@ def place(action):
     # Actualiser l'affichage
     pygame.display.flip()
 
-    print(len(TAB_ACTION))
     # placer visuellement
 
 
