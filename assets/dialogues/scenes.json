@@ -1,46 +1,24 @@
 {
   "scene_intro": [
-    { "character": "narrator", "line": "Les terres de Valdris sont sous l'emprise du Seigneur des Ombres, Malachar. Ses brigands terrorisent les villages... Mais un héros se lève." },
-    { "character": "hero", "line": "Ce village... il a tant souffert. Je dois trouver un moyen d'atteindre la forteresse de Malachar et mettre fin à cette tyrannie." },
-    { "character": "village_elder", "line": "Étranger ! Tu es notre dernier espoir. Le Seigneur des Ombres règne depuis sa tour maudite. Mais attention... ses sbires guettent chaque voyageur." },
-    { "character": "hero", "line": "Je n'ai pas peur de quelques brigands. Dites-moi ce que je dois faire pour l'atteindre." },
-    { "character": "village_elder", "line": "Tu devras accomplir de grandes épreuves pour être assez fort. Commence par aider nos gens... et méfie-toi des pièges sur ta route." }
-  ],
-
-  "scene_quest1": [
-    { "character": "merchant_aldric", "line": "Héros ! Mes marchandises ont été volées par les brigands ! Sans elles, ma famille mourra de faim cet hiver." },
-    { "character": "hero", "line": "Où ont-ils emmené vos biens ?" },
-    { "character": "merchant_aldric", "line": "Dans la forêt sombre, à l'ouest. Mais c'est un piège, j'en suis sûr ! Ils t'attendent..." },
-    { "character": "hero", "line": "Qu'ils viennent. Je récupérerai ce qui vous appartient." },
-
-    { "character": "merchant_aldric", "line": "Par tous les dieux ! Tu as récupéré mes marchandises ! Comment as-tu survécu à tous ces pièges ?" },
-    { "character": "hero", "line": "La ruse de ces brigands s'améliore... mais ma détermination aussi. Tenez, voici vos biens." },
-    { "character": "merchant_aldric", "line": "Prends cette bourse, tu l'as bien méritée. Et cette potion... elle pourrait te sauver la vie." }
-  ],
-
-  "scene_quest2": [
-    { "character": "blacksmith_gareth", "line": "Mon fils ! Ces maudits brigands ont enlevé mon fils ! Il travaillait aux mines quand ils l'ont pris." },
-    { "character": "hero", "line": "Je le ramènerai sain et sauf." },
-    { "character": "blacksmith_gareth", "line": "Les mines sont truffées de leurs pièges maintenant. Ils semblent anticiper chaque mouvement... Fais attention !" },
-    { "character": "hero", "line": "Leur intelligence tactique s'améliore, mais ils ne m'arrêteront pas." },
-
-    { "character": "blacksmith_gareth", "line": "Mon fils ! Vivant ! Tu as déjoué toutes leurs ruses !" },
-    { "character": "hero", "line": "Ils deviennent plus imprévisibles... mais heureusement, moi aussi." },
-    { "character": "blacksmith_son", "line": "Ils parlaient entre eux... ils disent que tu apprends trop vite ! Ils ont peur de toi maintenant !" },
-    { "character": "blacksmith_gareth", "line": "Prends cette épée enchantée et cette armure légendaire. Tu es maintenant prêt pour Malachar." }
+    { "character": "Narrator", "line": "Depuis des siècles, les terres de Vercors vivaient en paix... jusqu’au jour où l’ombre de \"La terrreur du crous\" s’est abattue. Ses armées de brigands brûlent les récoltes, pillent les villages et répandent la peur." },
+    { "character": "Narrator", "line": "La forteresse de la Terreur du Crous domine désormais l’horizon, symbole de sa tyrannie. Aucun guerrier n’a jamais osé l’affronter... " },
+    { "character": "Narrator", "line": "Jusqu’à aujourd’hui !" },
+    { "character": "Héro", "line": "Ces ruines... ce village a été ravagé sans pitié. Je ne peux pas rester spectateur. Je trouverai un chemin vers la forteresse de la Terreur du Crous et mettrai fin à son règne." },
+    { "character": "Terreur du Crous", "line": "" },
+    { "character": "Héro", "line": "Peu importe les épreuves, peu importe les dangers. Ma route mène à Terreur du Crous. Et son règne s’achèvera par ma lame." }
   ],
 
   "scene_boss": [
-    { "character": "hero", "line": "Enfin... la tour de Malachar. Tout se termine ici." },
-    { "character": "malachar", "line": "Ah... le fameux héros. Tu arrives exactement comme prévu." },
-    { "character": "hero", "line": "Vos brigands m'ont bien formé, je l'admets. Mais votre règne s'achève maintenant !" },
-    { "character": "malachar", "line": "Mes 'brigands' ? *ricane* Tu crois vraiment qu'ils agissaient contre moi ? Chaque piège, chaque embuscade... tout était calculé pour te forger, t'endurcir !" },
-    { "character": "hero", "line": "Quoi... ? Impossible !" },
-    { "character": "malachar", "line": "J'avais besoin d'un adversaire digne de moi ! Un héros à ma mesure ! Mes serviteurs t'ont offert l'opposition parfaite... et maintenant, tu es devenu l'ennemi que je méritais !" },
-    { "character": "hero", "line": "Manipulation ou pas... je vous arrêterai !" },
-    { "character": "malachar", "line": "Nous verrons bien ! Que le meilleur gagne, héros... car grâce à mes brigands, tu es enfin devenu quelqu'un d'intéressant !" },
+    { "character": "Héro", "line": "Enfin... la tour de Terreur du Crous. Tout se termine ici." },
+    { "character": "Terreur du Crous", "line": "Ah... le fameux héros. Tu arrives exactement comme prévu." },
+    { "character": "Héro", "line": "Vos brigands m'ont bien formé, je l'admets. Mais votre règne s'achève maintenant !" },
+    { "character": "Terreur du Crous", "line": "Mes 'brigands' ? *ricane* Tu crois vraiment qu'ils agissaient contre moi ? Chaque piège, chaque embuscade... tout était calculé pour te forger, t'endurcir !" },
+    { "character": "Héro", "line": "Quoi... ? Impossible !" },
+    { "character": "Terreur du Crous", "line": "J'avais besoin d'un adversaire digne de moi ! Un héros à ma mesure ! Mes serviteurs t'ont offert l'opposition parfaite... et maintenant, tu es devenu l'ennemi que je méritais !" },
+    { "character": "Héro", "line": "Manipulation ou pas... je vous arrêterai !" },
+    { "character": "Terreur du Crous", "line": "Nous verrons bien ! Que le meilleur gagne, héros... car grâce à mes brigands, tu es enfin devenu quelqu'un d'intéressant !" },
 
-    { "character": "malachar", "line": "Quel combat magnifique... Mes serviteurs ont bien travaillé... Tu étais exactement l'adversaire... que j'espérais..." },
+    { "character": "Terreur du Crous", "line": "Quel combat magnifique... Mes serviteurs ont bien travaillé... Tu étais exactement l'adversaire... que j'espérais..." },
     { "character": "narrator", "line": "Et ainsi se termine cette histoire... où même les brigands dans l'ombre ont joué leur rôle dans cette légende." }
   ]
 }

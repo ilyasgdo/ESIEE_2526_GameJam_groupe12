@@ -4,7 +4,7 @@ import math
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
-        self.sprite_sheet = pygame.image.load('./assets/sprites/player/FOXSPRITESHEET.png').convert_alpha()
+        self.sprite_sheet = pygame.image.load('./assets/sprites/player/Sousfifre.png').convert_alpha()
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [x, y]
         self.speed = 3
@@ -17,7 +17,7 @@ class Player(pygame.sprite.Sprite):
         
         # Référence au bot allié pour la contrainte de distance
         self.ally_bot = None
-        self.max_distance_from_ally = 30000
+        self.max_distance_from_ally = 300
         
         # Système d'attraction automatique
         self.time_outside_range = 0  # Temps passé hors de portée (en millisecondes)
@@ -129,7 +129,6 @@ class Player(pygame.sprite.Sprite):
         if self.can_move_to(new_x, self.position[1]):
             self.position[0] = new_x
             self.movement_directions['right'] = True
-            self.change_animation('right')
             self.is_moving = True
 
     def move_left(self): 
@@ -137,7 +136,6 @@ class Player(pygame.sprite.Sprite):
         if self.can_move_to(new_x, self.position[1]):
             self.position[0] = new_x
             self.movement_directions['left'] = True
-            self.change_animation('left')
             self.is_moving = True
 
     def move_up(self): 
@@ -145,7 +143,6 @@ class Player(pygame.sprite.Sprite):
         if self.can_move_to(self.position[0], new_y):
             self.position[1] = new_y
             self.movement_directions['up'] = True
-            self.change_animation('up')
             self.is_moving = True
 
     def move_down(self): 
@@ -153,7 +150,6 @@ class Player(pygame.sprite.Sprite):
         if self.can_move_to(self.position[0], new_y):
             self.position[1] = new_y
             self.movement_directions['down'] = True
-            self.change_animation('down')
             self.is_moving = True
 
     def reset_movement_flags(self):

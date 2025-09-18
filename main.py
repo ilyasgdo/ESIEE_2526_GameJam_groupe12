@@ -36,7 +36,6 @@ def main():
     game_manager = GameManager(screen)
 
     game_manager.dialogue_manager.start_scene("scene_intro")
-
     running = True
     while running:
         for event in pygame.event.get():
@@ -60,9 +59,8 @@ def main():
         if not game_manager.dialogue_manager.is_active():
             # Gestion des touches en continu
             game_manager.handle_input()
-
-        # Mise à jour du jeu
-        game_manager.update()
+            # Mise à jour du jeu
+            game_manager.update()
         # Rendu
         game_manager.render()
 

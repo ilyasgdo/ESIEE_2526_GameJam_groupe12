@@ -33,7 +33,7 @@ class UIManager:
         # =========================
         # Hotbar (barre d'items) en bas à gauche
         # =========================
-        self.hotbar_slots_count = 4
+        self.hotbar_slots_count = 3
         self.hotbar_slot_size = 64
         self.hotbar_margin = 12
         self.hotbar_padding = 8
@@ -65,11 +65,6 @@ class UIManager:
         # Slot 4 (index 3) -> Tsar Bomba II
         # Slot 0 (index 0) -> Fire Bullet
         # Slot 1 (index 2) -> Dragon Fire Breath
-        fire_thrower_icon, fire_thrower_icon_grey = self._load_icon_with_grey(
-            './assets/UI/DragonFireBreathTraps.png',
-            None,
-            (self.hotbar_slot_size - 16, self.hotbar_slot_size - 16)
-        )
 
         # Construction de la hotbar
         for i in range(self.hotbar_slots_count):
@@ -82,9 +77,6 @@ class UIManager:
                 icon = trap_icon
                 icon_grey = trap_icon_grey
             elif i == 2:
-                icon = fire_thrower_icon
-                icon_grey = fire_thrower_icon_grey
-            elif i == 3:
                 icon = bomb_icon
                 icon_grey = bomb_icon_grey
             self.hotbar.append({

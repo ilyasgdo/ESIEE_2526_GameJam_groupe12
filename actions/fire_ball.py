@@ -17,6 +17,7 @@ class FireBall(pygame.sprite.Sprite):
         self.damage = 0.5
         self.active = True
         self.countdown = 5000
+        self.score = 10
 
         # Déterminer l’angle avec un petit cône aléatoire
         base_angle = {"up": -90, "down": 90, "left": 180, "right": 0}.get(direction, 0)
