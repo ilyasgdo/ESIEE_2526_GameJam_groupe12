@@ -86,14 +86,6 @@ class UIManager:
                 'cooldown_remaining': 0.0,
             })
 
-        # =========================
-        # Barre de stun (en haut de l'écran)
-        # =========================
-        self.stun_active = False
-        self.stun_duration = 0.0
-        self.stun_elapsed = 0.0
-        self.stun_state = 'idle'  # idle | stunned | refilling
-        self.stun_refill_duration = 1.2
         # Taille à l'écran
         self.stun_bar_width_ratio = 0.1  # 10% de la largeur d'écran
         self.stun_bar_height_px = 36     # hauteur fixe
@@ -189,20 +181,7 @@ class UIManager:
                 slot['cooldown_remaining'] -= dt_slots
                 if slot['cooldown_remaining'] < 0:
                     slot['cooldown_remaining'] = 0
-        # Machine à états de la barre de stun
-        if self.stun_active:
-            if self.stun_state == 'stunned':
-                self.stun_elapsed += dt_slots
-                if self.stun_elapsed >= self.stun_duration:
-                    # passer à la phase de remplissage
-                    self.stun_state = 'refilling'
-                    self.stun_elapsed = 0.0
-            elif self.stun_state == 'refilling':
-                self.stun_elapsed += dt_slots
-                if self.stun_elapsed >= self.stun_refill_duration:
-                    # retour à plein et fin
-                    self.stun_state = 'idle'
-                    self.stun_active = False
+
 
     def render(self, screen):
         """Dessine toutes les couches d'UI. À appeler après le rendu du monde."""
@@ -270,9 +249,6 @@ class UIManager:
 
         # Hotbar
         self._render_hotbar(screen)
-
-        # Barre de stun
-        self._render_stun_bar(screen)
 
     def _render_countdown(self, screen):
         """Dessin du compte à rebours circulaire (fond + portion + texte)."""
@@ -366,78 +342,7 @@ class UIManager:
             slot['cooldown_total'] = float(seconds)
             slot['cooldown_remaining'] = float(seconds)
 
-    def start_stun(self, seconds):
-        """Déclenche un étourdissement: barre vide (shake), puis remplissage animé."""
-        self.stun_duration = max(0.01, float(seconds))
-        self.stun_elapsed = 0.0
-        self.stun_active = True
-        self.stun_state = 'stunned'
 
-    def _render_stun_bar(self, screen):
-        """Dessine la barre de stun en haut, toujours visible (base + overlay)."""
-        margin_top = 8
-        if getattr(self, 'stun_base_frame', None) is not None or getattr(self, 'stun_frames', []):
-            target_w = int(self.screen_width * self.stun_bar_width_ratio)
-            target_h = int(self.stun_bar_height_px)
-            x = (self.screen_width - target_w) // 2
-            y = margin_top
-            if self.stun_state == 'stunned':
-                import random
-                x += random.randint(-2, 2)
-                y += random.randint(-1, 1)
-            if getattr(self, 'stun_base_frame', None) is not None:
-                base_frame = self.stun_base_frame
-                overlay_frames = self.stun_overlay_frames
-            else:
-                base_frame = self.stun_frames[0]
-                overlay_frames = self.stun_frames[1:] if len(self.stun_frames) > 1 else []
-            base_scaled = pygame.transform.scale(base_frame, (target_w, target_h))
-            screen.blit(base_scaled, (x, y))
-            if overlay_frames:
-                if self.stun_state == 'stunned':
-                    progress = 0.0
-                elif self.stun_state == 'refilling':
-                    progress = min(1.0, max(0.0, self.stun_elapsed / self.stun_refill_duration))
-                else:
-                    progress = 1.0
-                idx = int(progress * (len(overlay_frames) - 1)) if len(overlay_frames) > 1 else 0
-                overlay = overlay_frames[idx]
-                overlay_scaled = pygame.transform.scale(overlay, (target_w, target_h))
-                screen.blit(overlay_scaled, (x, y))
-        else:
-            # Fallback: simple rectangle jaune
-            bar_w = int(self.screen_width * self.stun_bar_width_ratio)
-            bar_h = self.stun_bar_height_px
-            x = (self.screen_width - bar_w) // 2
-            y = 8
-            pygame.draw.rect(screen, (30, 30, 30), (x, y, bar_w, bar_h), border_radius=8)
-            pygame.draw.rect(screen, (200, 200, 200), (x, y, bar_w, bar_h), width=2, border_radius=8)
-            if self.stun_state == 'stunned':
-                fill_ratio = 0.0
-            elif self.stun_state == 'refilling':
-                fill_ratio = min(1.0, max(0.0, self.stun_elapsed / self.stun_refill_duration))
-            else:
-                fill_ratio = 1.0
-            pygame.draw.rect(screen, (255, 220, 40), (x+2, y+2, int((bar_w-4) * fill_ratio), bar_h-4), border_radius=6)
-
-    def configure_stun_manual_slices(self, base_rect, overlay_rects):
-        """Configure la barre de stun avec des découpes manuelles (pixels).
-
-        base_rect: tuple (x, y, w, h) de la frame de base
-        overlay_rects: liste de tuples (x, y, w, h) pour les frames d'overlay
-        """
-        try:
-            sheet = pygame.image.load('./assets/UI/07.png').convert_alpha()
-            b = pygame.Rect(base_rect)
-            self.stun_base_frame = sheet.subsurface(b).copy()
-            self.stun_overlay_frames = []
-            for r in overlay_rects:
-                rr = pygame.Rect(r)
-                self.stun_overlay_frames.append(sheet.subsurface(rr).copy())
-        except Exception:
-            # En cas d'erreur, repasser en mode auto (fallback)
-            self.stun_base_frame = None
-            self.stun_overlay_frames = []
 
     def _load_icon_with_grey(self, image_path, crop_rect, target_size):
         """Charge une image, optionnellement la découpe, la redimensionne et crée une version grisée.
