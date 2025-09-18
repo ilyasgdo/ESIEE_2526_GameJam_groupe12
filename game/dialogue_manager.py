@@ -36,7 +36,6 @@ class DialogueManager:
                 path = os.path.join(self.sprite_folder, filename)
                 try:
                     self.sprites[name] = pygame.image.load(path).convert_alpha()
-                    print(f"[DialogueManager] ✅ Sprite chargé : {name} -> {path}")
                 except Exception as e:
                     print(f"[DialogueManager] ⚠️ Erreur chargement sprite {filename}: {e}")
 
@@ -50,9 +49,6 @@ class DialogueManager:
         if os.path.exists(filename):
             with open(filename, "r", encoding="utf-8") as f:
                 self.dialogues.update(json.load(f))
-            print(f"[DialogueManager] 📖 Dialogues chargés depuis {filename}: {list(self.dialogues.keys())}")
-        else:
-            print(f"[DialogueManager] ❌ Fichier introuvable : {filename}")
 
     def start_scene(self, scene_id):
         """Lance une séquence scénarisée (ex: 'scene_intro')"""
@@ -60,7 +56,6 @@ class DialogueManager:
             self.active_scene = scene_id
             self.current_line = 0
             self.active = True
-            print(f"[DialogueManager] 🎬 Démarrage de la scène '{scene_id}'")
         else:
             print(f"[DialogueManager] ❌ Aucune scène trouvée pour {scene_id}")
 
@@ -69,11 +64,8 @@ class DialogueManager:
             return
         self.current_line += 1
         if self.current_line >= len(self.dialogues[self.active_scene]):
-            print("[DialogueManager] 🛑 Fin de la scène.")
             self.active = False
             self.active_scene = None
-        else:
-            print(f"[DialogueManager] ➡️ Passage à la ligne {self.current_line}")
 
     def wrap_text(self, text, font, max_width):
         """Découpe le texte pour qu'il rentre dans max_width"""
@@ -100,7 +92,6 @@ class DialogueManager:
         character = dialogue_entry.get("character", "???")
         line = dialogue_entry.get("line", "")
 
-        print(f"[DialogueManager] 👤 Personnage actuel: '{character}' | Texte: '{line[:30]}...'")
 
         screen_width, screen_height = screen.get_size()
         
