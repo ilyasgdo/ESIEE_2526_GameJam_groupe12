@@ -287,6 +287,7 @@ class GameManager:
             # Vérifier si le délai après téléportation est écoulé
             if self.teleported and self.teleport_time is not None:
                 current_time = pygame.time.get_ticks()
+                self.dialogue_manager.start_scene("scene_boss")
                 if current_time - self.teleport_time >= self.end_screen_delay:
                     print("⏰ Délai écoulé, déclenchement de l'écran de fin!")
                     self.trigger_end_screen_with_percentage()
@@ -468,7 +469,7 @@ class GameManager:
             
             # Score final
             score_text = f"Score final: {self.score}"
-            percentage_text = f"Pourcentage: {self.percentage:.1f}%"
+            percentage_text = f"Pourcentage de chance que la Terreur du Crous gagne: {self.percentage:.1f}%"
             
             font_small = pygame.font.Font(None, 36)
             score_surface = font_small.render(score_text, True, (200, 200, 200))

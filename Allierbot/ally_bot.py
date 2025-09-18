@@ -14,9 +14,9 @@ class AllyBot(pygame.sprite.Sprite):
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [float(x), float(y)]
         self.old_position = self.position.copy()  # Pour la gestion des collisions
-        self.speed = 30  # Vitesse de déplacement
+        self.speed = 10  # Vitesse de déplacement
         self.frame_index = 0
-        self.animation_speed = 0.2
+        self.animation_speed = 0.1
         self.current_direction = 'down'
         
         # Référence au joueur (gardée pour la contrainte de distance du joueur)
@@ -78,7 +78,7 @@ class AllyBot(pygame.sprite.Sprite):
         # Variables pour l'IA autonome avec checkpoints
         self.state = "moving_to_checkpoint"   # États: "moving_to_checkpoint", "pausing", "avoiding_bot"
         self.state_timer = 0
-        self.pause_duration = 180  # 4 secondes à 60 FPS
+        self.pause_duration = 80  # 4 secondes à 60 FPS
         self.random_movement_timer = 0
         self.random_target_x = x
         self.random_target_y = y
@@ -105,7 +105,7 @@ class AllyBot(pygame.sprite.Sprite):
         self.target_y = y
         self.velocity_x = 0
         self.velocity_y = 0
-        self.acceleration = 2
+        self.acceleration = 3.5
         self.friction = 0.88
         
         # Variables pour des mouvements plus naturels et réactifs
@@ -165,7 +165,7 @@ class AllyBot(pygame.sprite.Sprite):
         """Vérifier si le bot peut se déplacer à la position donnée"""
         return not self.check_collision_at_position(new_x, new_y)
 
-    def get_image(self, x, y, scale=4):
+    def get_image(self, x, y, scale=3):
         frame = pygame.Surface((32, 32), pygame.SRCALPHA)
         frame.blit(self.sprite_sheet, (0, 0), (x, y, 32, 32))
 
@@ -174,7 +174,7 @@ class AllyBot(pygame.sprite.Sprite):
         frame = pygame.transform.scale(frame, size)
         return frame
 
-    def load_row(self, row, scale=4):
+    def load_row(self, row, scale=3):
         """Charge une ligne d'animation et scale chaque frame"""
         return [self.get_image(col * 32, row * 32, scale) for col in range(4)]
 
