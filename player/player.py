@@ -4,7 +4,7 @@ import math
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
-        self.sprite_sheet = pygame.image.load('assets/sprites/player/Brigand.png').convert_alpha()
+        self.sprite_sheet = pygame.image.load('./assets/sprites/player/Sousfifre.png').convert_alpha()
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [x, y]
         self.speed = 3
@@ -17,7 +17,7 @@ class Player(pygame.sprite.Sprite):
         
         # Référence au bot allié pour la contrainte de distance
         self.ally_bot = None
-        self.max_distance_from_ally = 30000
+        self.max_distance_from_ally = 300
         
         # Système d'attraction automatique
         self.time_outside_range = 0  # Temps passé hors de portée (en millisecondes)
