@@ -5,8 +5,7 @@ class Trap(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
         self.damage = 0.5
-        self.x = x
-        self.y = y
+        self.pos = [x, y]
         self.active = True
         self.countdown = 10000
 
@@ -14,6 +13,7 @@ class Trap(pygame.sprite.Sprite):
         self.image = self.get_image(0, 0)
         self.rect = pygame.Rect(x, y, 32, 32)
         self.score = 10
+        self.stunt = 3
 
 
 
