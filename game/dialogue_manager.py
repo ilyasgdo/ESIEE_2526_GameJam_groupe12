@@ -23,29 +23,6 @@ class DialogueManager:
         self.sprites = {}
         self.sprite_folder = sprite_folder
         self.load_sprites()
-        
-        # Système de sons pour les dialogues longs
-        self.dialogue_sounds = []
-        self.current_sound_index = 0
-        self.load_dialogue_sounds()
-
-    def load_dialogue_sounds(self):
-        """Charge les sons 1.mp3 à 5.mp3 pour les dialogues longs"""
-        sound_folder = "assets/musics"
-        for i in range(1, 6):  # 1 à 5
-            sound_path = os.path.join(sound_folder, f"{i}.mp3")
-            if os.path.exists(sound_path):
-                try:
-                    sound = pygame.mixer.Sound(sound_path)
-                    self.dialogue_sounds.append(sound)
-                    print(f"[DialogueManager] ✅ Son chargé: {sound_path}")
-                except Exception as e:
-                    print(f"[DialogueManager] ❌ Erreur chargement son {sound_path}: {e}")
-            else:
-                print(f"[DialogueManager] ⚠️ Son introuvable: {sound_path}")
-        
-        if not self.dialogue_sounds:
-            print("[DialogueManager] ⚠️ Aucun son de dialogue chargé")
 
     def load_sprites(self):
         """Charge les sprites pour les personnages (nom du fichier = nom du personnage en minuscule)."""
@@ -79,40 +56,12 @@ class DialogueManager:
             self.active_scene = scene_id
             self.current_line = 0
             self.active = True
-            self.current_sound_index = 0  # Réinitialiser l'index des sons
         else:
             print(f"[DialogueManager] ❌ Aucune scène trouvée pour {scene_id}")
-
-    def count_words(self, text):
-        """Compte le nombre de mots dans un texte"""
-        return len(text.split())
-
-    def stop_all_sounds(self):
-        """Arrête tous les sons en cours de lecture"""
-        pygame.mixer.stop()
-        print("[DialogueManager] 🔇 Tous les sons arrêtés")
-
-    def play_dialogue_sound(self, text):
-        """Joue un son si le texte fait plus de 5 mots"""
-        if self.count_words(text) > 5 and self.dialogue_sounds:
-            # Arrêter tous les sons en cours avant de jouer le nouveau
-            self.stop_all_sounds()
-            
-            # Jouer le son suivant dans la séquence
-            sound = self.dialogue_sounds[self.current_sound_index]
-            sound.play()
-            print(f"[DialogueManager] 🔊 Son joué: {self.current_sound_index + 1}.mp3")
-            
-            # Passer au son suivant (cycle de 1 à 5)
-            self.current_sound_index = (self.current_sound_index + 1) % len(self.dialogue_sounds)
 
     def next_line(self):
         if not self.active:
             return
-        
-        # Arrêter tous les sons en cours lors du skip
-        self.stop_all_sounds()
-        
         self.current_line += 1
         if self.current_line >= len(self.dialogues[self.active_scene]):
             self.active = False
@@ -143,10 +92,6 @@ class DialogueManager:
         character = dialogue_entry.get("character", "???")
         line = dialogue_entry.get("line", "")
 
-        # Jouer un son pour la ligne actuelle si elle est longue (seulement au début)
-        if not hasattr(self, '_current_line_played') or self._current_line_played != self.current_line:
-            self.play_dialogue_sound(line)
-            self._current_line_played = self.current_line
 
         screen_width, screen_height = screen.get_size()
         
