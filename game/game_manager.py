@@ -8,6 +8,7 @@ import pygame
 import os
 import pytmx
 import pyscroll
+import random
 
 from actions.actions import TAB_ACTION
 from actions.trap import Trap
@@ -54,6 +55,12 @@ class GameManager:
         self.group.add(self.ally_bot)
         self.percentage = 50.0  # Pourcentage initial de 50%
         self.score = 0
+
+        # Variables pour l'écran de fin
+        self.game_ended = False
+        self.end_screen_result = None  # 'victory' ou 'defeat'
+        self.end_screen_timer = 0
+        self.end_screen_duration = 5000  # 5 secondes en millisecondes
         # Définir la référence au bot allié pour le joueur (contrainte de distance)
         self.player.set_ally_bot(self.ally_bot)
         
@@ -167,6 +174,28 @@ class GameManager:
             self.error_message = "Fichier TMX introuvable"
             self.map_loaded = False
 
+    def trigger_end_screen(self):
+        """Déclenche l'écran de fin avec un résultat aléatoire"""
+        if not self.game_ended:
+            self.game_ended = True
+            # Random entre victoire et défaite (50/50)
+            self.end_screen_result = random.choice(['victory', 'defeat'])
+            self.end_screen_timer = pygame.time.get_ticks()
+            
+            # Activer les barres cinématiques
+            self.ui.show('cinematic_bars')
+            
+            # Messages selon le résultat
+            if self.end_screen_result == 'victory':
+                print("🎉 VICTOIRE DU MÉCHANT! Le héros a été vaincu!")
+                message = "VICTOIRE! Le méchant triomphe!"
+            else:
+                print("😔 DÉFAITE DU MÉCHANT! Le héros l'a emporté...")
+                message = "DÉFAITE! Le héros a gagné..."
+            
+            # Afficher le message dans l'UI
+            self.ui.show('dialog', message)
+
     def get_percentage(self):
         """Retourne le pourcentage actuel"""
         return self.percentage
@@ -177,37 +206,46 @@ class GameManager:
 
     def update(self):
         """Mise à jour des entités du jeu"""
-        self.group.update()
-        self.group.center(self.player.rect.center)
-        self.fireballs.update()
-        # Vérifier les collisions projectile-héros
-        self.check_projectile_hero_collision()
-        # Mettre à jour le gestionnaire de formation avec les groupes de projectiles
-        if hasattr(self, 'formation_manager'):
-            self.formation_manager.update(self.fireballs, self.group)
+        if self.game_ended:
+            current_time = pygame.time.get_ticks()
+            if current_time - self.end_screen_timer >= self.end_screen_duration:
+                self.reset_game()
+                return
         
-        # Mettre à jour l'ally bot avec les groupes de projectiles pour le tir sur le hero bot
-        if hasattr(self, 'ally_bot'):
-            self.ally_bot.update(self.fireballs, self.group)
-        
-        # Mettre à jour la minimap avec les positions des entités
-        if hasattr(self, 'minimap') and self.minimap:
-            self.minimap.update_player_position(self.player.position[0], self.player.position[1])
-            self.minimap.update_ally_position(self.ally_bot.position[0], self.ally_bot.position[1])
+        if not self.game_ended:
+            self.group.update()
+            self.group.center(self.player.rect.center)
+            self.fireballs.update()
             
-            # Mettre à jour la position du bot
-            if hasattr(self, 'bot') and self.bot:
-                self.minimap.update_bot_position(self.bot.position[0], self.bot.position[1])
+            # Vérifier les collisions projectile-héros
+            self.check_projectile_hero_collision()
             
-            # Mettre à jour les positions des subordonnés
+            # Mettre à jour le gestionnaire de formation avec les groupes de projectiles
             if hasattr(self, 'formation_manager'):
-                self.minimap.update_subordinates_positions(self.formation_manager.get_subordinates())
+                self.formation_manager.update(self.fireballs, self.group)
             
-            # Appeler la méthode update pour rafraîchir l'affichage
-            self.minimap.update()
-        # Mise à jour de l'UI (timers, animations UI)
+            # Mettre à jour l'ally bot avec les groupes de projectiles pour le tir sur le hero bot
+            if hasattr(self, 'ally_bot'):
+                self.ally_bot.update(self.fireballs, self.group)
+            
+            # Mettre à jour la minimap avec les positions des entités
+            if hasattr(self, 'minimap') and self.minimap:
+                self.minimap.update_player_position(self.player.position[0], self.player.position[1])
+                self.minimap.update_ally_position(self.ally_bot.position[0], self.ally_bot.position[1])
+                
+                # Mettre à jour la position du bot
+                if hasattr(self, 'bot') and self.bot:
+                    self.minimap.update_bot_position(self.bot.position[0], self.bot.position[1])
+                
+                # Mettre à jour les positions des subordonnés
+                if hasattr(self, 'formation_manager'):
+                    self.minimap.update_subordinates_positions(self.formation_manager.get_subordinates())
+                
+                # Appeler la méthode update pour rafraîchir l'affichage
+                self.minimap.update()
+            
+            # Mise à jour de l'UI (timers, animations UI)
         self.ui.update()
-        
     def check_projectile_hero_collision(self):
             """Vérifie les collisions entre les projectiles et le héros (bot)"""
             if not hasattr(self, 'bot') or not self.bot:
@@ -261,56 +299,168 @@ class GameManager:
 
 
     def render(self):
-        """Rendu des entités du jeu"""
-        if not self.dialogue_manager.is_active():
+        """Rendu avec gestion de l'écran de fin - VERSION CORRIGÉE"""
+        if self.game_ended:
+            # Rendu normal du jeu en arrière-plan (optionnel)
             self.group.draw(self.screen)
             self.fireballs.draw(self.screen)
-            
-            # Rendre la zone de mouvement du joueur autour de l'ally bot
-            self.movement_zone_renderer.render_movement_zone(
-                self.screen, 
-                self.player, 
-                self.ally_bot
-            )
-            
-            # Rendre les informations de distance
-            self.movement_zone_renderer.render_distance_info(
-                self.screen, 
-                self.player
-            )
             
             # Rendre la minimap par-dessus le jeu
             if hasattr(self, 'minimap'):
                 self.minimap.render()
-            self.ui.render(self.screen)
-        self.dialogue_manager.draw(self.screen)
+            
+            # Fond sombre pour l'écran de fin
+            overlay = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 180))
+            self.screen.blit(overlay, (0, 0))
+            
+            # Afficher le texte de fin
+            font_large = pygame.font.Font(None, 72)
+            font_medium = pygame.font.Font(None, 48)
+            
+            if self.end_screen_result == 'victory':
+                title_color = (255, 215, 0)  # Or pour victoire
+                title_text = "VICTOIRE!"
+                subtitle_text = "Le méchant triomphe!"
+            else:
+                title_color = (220, 20, 60)  # Rouge pour défaite
+                title_text = "DÉFAITE!"
+                subtitle_text = "Le héros a gagné..."
+            
+            # Titre principal
+            title_surface = font_large.render(title_text, True, title_color)
+            title_rect = title_surface.get_rect(center=(self.width//2, self.height//2 - 50))
+            self.screen.blit(title_surface, title_rect)
+            
+            # Sous-titre
+            subtitle_surface = font_medium.render(subtitle_text, True, (255, 255, 255))
+            subtitle_rect = subtitle_surface.get_rect(center=(self.width//2, self.height//2 + 20))
+            self.screen.blit(subtitle_surface, subtitle_rect)
+            
+            # Score final
+            score_text = f"Score final: {self.score}"
+            percentage_text = f"Pourcentage: {self.percentage:.1f}%"
+            
+            font_small = pygame.font.Font(None, 36)
+            score_surface = font_small.render(score_text, True, (200, 200, 200))
+            percentage_surface = font_small.render(percentage_text, True, (200, 200, 200))
+            
+            score_rect = score_surface.get_rect(center=(self.width//2, self.height//2 + 80))
+            percentage_rect = percentage_surface.get_rect(center=(self.width//2, self.height//2 + 120))
+            
+            self.screen.blit(score_surface, score_rect)
+            self.screen.blit(percentage_surface, percentage_rect)
+            
+            # Timer de fin
+            remaining_time = max(0, (self.end_screen_duration - (pygame.time.get_ticks() - self.end_screen_timer)) // 1000)
+            timer_text = f"Redémarrage dans {remaining_time + 1}s..."
+            timer_surface = font_small.render(timer_text, True, (150, 150, 150))
+            timer_rect = timer_surface.get_rect(center=(self.width//2, self.height//2 + 180))
+            self.screen.blit(timer_surface, timer_rect)
+            
+            # Instructions
+            instruction_text = "Appuyez sur ESPACE pour redémarrer immédiatement"
+            instruction_surface = pygame.font.Font(None, 24).render(instruction_text, True, (120, 120, 120))
+            instruction_rect = instruction_surface.get_rect(center=(self.width//2, self.height//2 + 220))
+            self.screen.blit(instruction_surface, instruction_rect)
+            
+        else:
+            # Rendu normal du jeu
+            if not self.dialogue_manager.is_active():
+                self.group.draw(self.screen)
+                self.fireballs.draw(self.screen)
+                # Rendre la minimap par-dessus le jeu
+                if hasattr(self, 'minimap'):
+                    self.minimap.render()
+                self.ui.render(self.screen)
+                # Rendre la zone de mouvement du joueur autour de l'ally bot
+                self.movement_zone_renderer.render_movement_zone(
+                    self.screen, 
+                    self.player, 
+                    self.ally_bot
+                )
+                
+                # Rendre les informations de distance
+                self.movement_zone_renderer.render_distance_info(
+                    self.screen, 
+                    self.player
+                )
+            
+            # TOUJOURS dessiner les dialogues en dernier (par-dessus tout)
+            self.dialogue_manager.draw(self.screen)
 
+        # IMPORTANT : Toujours faire le flip à la fin
         pygame.display.flip()
 
+    def reset_game(self):
+        """Remet le jeu à zéro après l'écran de fin"""
+        self.game_ended = False
+        self.end_screen_result = None
+        self.percentage = 50.0
+        self.score = 0
+        
+        # Cacher les éléments UI de fin
+        self.ui.hide('cinematic_bars')
+        self.ui.hide('dialog')
+        
+        # Repositionner les entités
+        if hasattr(self, 'player'):
+            self.player.position = [self.spawn_position.x, self.spawn_position.y]
+        
+        if hasattr(self, 'ally_bot'):
+            self.ally_bot.position = [786.67, 5900.67]
+        
+        if hasattr(self, 'bot'):
+            bot_spawn_x = 100
+            bot_spawn_y = (self.tmx_data.height * self.tmx_data.tileheight) - 100
+            self.bot.position = [bot_spawn_x, bot_spawn_y]
+        
+        # Vider les projectiles
+        if hasattr(self, 'fireballs'):
+            self.fireballs.empty()
+        
+        print("🔄 Jeu redémarré!")
 
     def handle_movent(self, pressed):
         self.player.save_location()
         is_moving = False
+
+        # Reset flags avant d'assigner
+        self.player.reset_movement_flags()
+
+        # --- Déplacement ---
         if pressed[pygame.K_z]:
             self.player.move_up()
+            self.player.movement_directions['up'] = True
             is_moving = True
         if pressed[pygame.K_s]:
             self.player.move_down()
+            self.player.movement_directions['down'] = True
             is_moving = True
         if pressed[pygame.K_q]:
             self.player.move_left()
+            self.player.movement_directions['left'] = True
             is_moving = True
         if pressed[pygame.K_d]:
             self.player.move_right()
+            self.player.movement_directions['right'] = True
             is_moving = True
+
+        # --- Animation avec priorité ---
+        if pressed[pygame.K_z]:
+            self.player.current_anim = "up"
+        elif pressed[pygame.K_s]:
+            self.player.current_anim = "down"
+        elif pressed[pygame.K_q]:
+            self.player.current_anim = "left"
+        elif pressed[pygame.K_d]:
+            self.player.current_anim = "right"
+        # Si aucune touche n'est pressée, on garde l'animation précédente jusqu'au stop()
+
         if not is_moving:
             self.player.stop()
 
-        self.player.reset_movement_flags()
-        if pressed[pygame.K_z]: self.player.movement_directions['up'] = True
-        if pressed[pygame.K_s]: self.player.movement_directions['down'] = True
-        if pressed[pygame.K_q]: self.player.movement_directions['left'] = True
-        if pressed[pygame.K_d]: self.player.movement_directions['right'] = True
+
 
     def handle_collision(self):
         for obj in self.collisions:
@@ -363,7 +513,8 @@ class GameManager:
     def handle_action(self, pressed):
         #Ajouter les autres actions
         # faire changer le countdown via cette fonction
-
+        if self.game_ended:
+            return
         x = self.player.position[0]
         y = self.player.position[1]
 
@@ -378,19 +529,22 @@ class GameManager:
         elif pressed[pygame.K_o]:
             self.ui.start_stun(2.5)
         elif pressed[pygame.K_SPACE]:
-            # Déléguer la gestion du dialogue au GameManager
             self.handle_dialogue()
+        # NEED TO BE REMOVED
+        elif pressed[pygame.K_RETURN]:  # NOUVELLE TOUCHE : Entrée pour déclencher la fin
+            self.trigger_end_screen()
 
     def handle_input(self):
         pressed = pygame.key.get_pressed()
-
+        if self.game_ended:
+            # Pendant l'écran de fin, on peut permettre d'accélérer avec ESPACE
+            pressed = pygame.key.get_pressed()
+            if pressed[pygame.K_SPACE]:
+                self.reset_game()
+            return
         self.handle_movent(pressed)
         self.handle_collision()
         self.handle_action(pressed)
-
-
-
-
 
     def handle_dialogue(self):
         """Gérer le passage au dialogue suivant ou démarrer un dialogue"""
@@ -398,3 +552,29 @@ class GameManager:
             self.dialogue_manager.next_line()
         else:
             self.dialogue_manager.start_scene("scene_intro")
+    def check_win_lose_conditions(self):
+            """Vérifie automatiquement les conditions de fin de partie"""
+            # Exemple de conditions automatiques (à adapter selon votre jeu)
+            
+            # Victoire automatique si pourcentage >= 100%
+            if self.percentage >= 100.0:
+                if not self.game_ended:
+                    # Forcer une victoire si le pourcentage est au max
+                    self.game_ended = True
+                    self.end_screen_result = 'victory'
+                    self.end_screen_timer = pygame.time.get_ticks()
+                    self.ui.show('cinematic_bars')
+                    self.ui.show('dialog', "VICTOIRE PARFAITE! 100% atteint!")
+            
+            # Défaite si le héros (bot) atteint une certaine zone
+            # (exemple : si le bot atteint les coordonnées du joueur)
+            if hasattr(self, 'bot') and hasattr(self, 'player'):
+                distance = ((self.bot.position[0] - self.player.position[0])**2 + 
+                        (self.bot.position[1] - self.player.position[1])**2)**0.5
+                if distance < 50:  # Distance très proche
+                    if not self.game_ended:
+                        self.game_ended = True
+                        self.end_screen_result = 'defeat'
+                        self.end_screen_timer = pygame.time.get_ticks()
+                        self.ui.show('cinematic_bars')
+                        self.ui.show('dialog', "Le héros vous a rattrapé!")
