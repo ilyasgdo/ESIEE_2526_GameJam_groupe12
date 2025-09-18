@@ -2,17 +2,46 @@ import pygame
 import json
 import os
 
+CHARACTER_SPRITE_MAP = {
+    "Héro": "Hero",
+    "Terreur du Crous": "BigBoss",
+    "Brigand": "Brigand",
+}
+
 class DialogueManager:
-    def __init__(self, font_path=None, line_font_size=28, character_font_size=36):
-        # Police pour le texte de dialogue (plus grande)
+    def __init__(self, sprite_folder="assets/sprites/player", font_path=None, line_font_size=28, character_font_size=36):
+        # Police pour le texte
         self.font = pygame.font.Font(font_path, line_font_size)
-        # Police encore plus grande pour le nom du personnage
         self.character_font = pygame.font.Font(font_path, character_font_size)
 
         self.dialogues = {}
         self.active_scene = None
         self.current_line = 0
         self.active = False
+
+        # Chargement des sprites
+        self.sprites = {}
+        self.sprite_folder = sprite_folder
+        self.load_sprites()
+
+    def load_sprites(self):
+        """Charge les sprites pour les personnages (nom du fichier = nom du personnage en minuscule)."""
+        if not os.path.exists(self.sprite_folder):
+            print(f"[DialogueManager] ❌ Dossier sprites introuvable : {self.sprite_folder}")
+            return
+
+        for filename in os.listdir(self.sprite_folder):
+            if filename.lower().endswith((".png", ".jpg", ".jpeg")):
+                name = os.path.splitext(filename)[0]  # garde le nom exact du fichier
+                path = os.path.join(self.sprite_folder, filename)
+                try:
+                    self.sprites[name] = pygame.image.load(path).convert_alpha()
+                    print(f"[DialogueManager] ✅ Sprite chargé : {name} -> {path}")
+                except Exception as e:
+                    print(f"[DialogueManager] ⚠️ Erreur chargement sprite {filename}: {e}")
+
+        if not self.sprites:
+            print("[DialogueManager] ⚠️ Aucun sprite trouvé dans le dossier.")
 
     def is_active(self):
         return self.active 
@@ -21,9 +50,9 @@ class DialogueManager:
         if os.path.exists(filename):
             with open(filename, "r", encoding="utf-8") as f:
                 self.dialogues.update(json.load(f))
-            print(f"[DialogueManager] Dialogues chargés depuis {filename}: {list(self.dialogues.keys())}")
+            print(f"[DialogueManager] 📖 Dialogues chargés depuis {filename}: {list(self.dialogues.keys())}")
         else:
-            print(f"[DialogueManager] Fichier introuvable : {filename}")
+            print(f"[DialogueManager] ❌ Fichier introuvable : {filename}")
 
     def start_scene(self, scene_id):
         """Lance une séquence scénarisée (ex: 'scene_intro')"""
@@ -31,17 +60,20 @@ class DialogueManager:
             self.active_scene = scene_id
             self.current_line = 0
             self.active = True
+            print(f"[DialogueManager] 🎬 Démarrage de la scène '{scene_id}'")
         else:
-            print(f"[DialogueManager] Aucune scène trouvée pour {scene_id}")
+            print(f"[DialogueManager] ❌ Aucune scène trouvée pour {scene_id}")
 
     def next_line(self):
         if not self.active:
             return
         self.current_line += 1
         if self.current_line >= len(self.dialogues[self.active_scene]):
-            # Fin de la séquence
+            print("[DialogueManager] 🛑 Fin de la scène.")
             self.active = False
             self.active_scene = None
+        else:
+            print(f"[DialogueManager] ➡️ Passage à la ligne {self.current_line}")
 
     def wrap_text(self, text, font, max_width):
         """Découpe le texte pour qu'il rentre dans max_width"""
@@ -64,21 +96,20 @@ class DialogueManager:
         if not self.active:
             return
 
-        # Récupérer la réplique courante
         dialogue_entry = self.dialogues[self.active_scene][self.current_line]
         character = dialogue_entry.get("character", "???")
         line = dialogue_entry.get("line", "")
 
-        # Dimensions de l'écran
+        print(f"[DialogueManager] 👤 Personnage actuel: '{character}' | Texte: '{line[:30]}...'")
+
         screen_width, screen_height = screen.get_size()
         
-        # Taille de la boîte de dialogue
+        # Zone de dialogue
         padding = 25
         box_height = 200
         box_width = screen_width - 40
         text_area_width = box_width - 2 * padding
         
-        # Position de la boîte
         box_x = 20
         box_y = screen_height - box_height - 20
         
@@ -93,14 +124,37 @@ class DialogueManager:
         # Boîte principale
         pygame.draw.rect(screen, (30, 30, 40), dialogue_rect, border_radius=15)
         pygame.draw.rect(screen, (100, 100, 120), dialogue_rect, 3, border_radius=15)
-        
-        # Affichage du nom du personnage
+
+        # --- Affichage du sprite du personnage ---
+        if not character == "Narrator":
+            sprite_key = CHARACTER_SPRITE_MAP.get(character, character)
+            sprite_sheet = self.sprites.get(sprite_key)
+            print(sprite_key)
+            
+            if sprite_sheet:
+                # Découpage de la première frame (ex: 16x16 ou 32x32 selon ton sheet)
+                FRAME_WIDTH, FRAME_HEIGHT = 32, 32  # ⚠️ adapte à la taille de tes sprites
+                rect = pygame.Rect(0, 0, FRAME_WIDTH, FRAME_HEIGHT)
+                first_frame = sprite_sheet.subsurface(rect)
+
+                # Agrandir le sprite (par ex x6)
+                sprite = pygame.transform.scale(first_frame, (FRAME_WIDTH * 10, FRAME_HEIGHT * 10))
+
+                # Position : centré au-dessus de la boîte de dialogue
+                sprite_x = box_x + 40
+                sprite_y = box_y - sprite.get_height() - 20
+                screen.blit(sprite, (sprite_x, sprite_y))
+
+                print(f"[DialogueManager] 🖼️ Sprite affiché (première frame) pour '{character}' (-> {sprite_key})")
+
+
+        # Nom du personnage
         character_surface = self.character_font.render(character + " :", True, (255, 215, 0))
         character_x = box_x + padding
         character_y = box_y + 15
         screen.blit(character_surface, (character_x, character_y))
         
-        # Affichage du texte avec retour à la ligne
+        # Texte
         wrapped_lines = self.wrap_text(line, self.font, text_area_width)
         text_x = box_x + padding
         text_y = character_y + character_surface.get_height() + 15
@@ -108,9 +162,9 @@ class DialogueManager:
         for wrapped_line in wrapped_lines:
             line_surface = self.font.render(wrapped_line, True, (255, 255, 255))
             screen.blit(line_surface, (text_x, text_y))
-            text_y += line_surface.get_height() + 5  # espacement entre lignes
+            text_y += line_surface.get_height() + 5
         
-        # Indicateur "Appuyer pour continuer"
+        # Indicateur
         indicator_text = "Appuyez sur ESPACE pour continuer..."
         indicator_surface = pygame.font.Font(None, 22).render(indicator_text, True, (200, 200, 200))
         indicator_x = box_x + box_width - indicator_surface.get_width() - padding
