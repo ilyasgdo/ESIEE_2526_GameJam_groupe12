@@ -3,7 +3,7 @@ import math
 import random
 
 class FireBall(pygame.sprite.Sprite):
-    def __init__(self, x, y, direction, speed=6, spread_angle=15):
+    def __init__(self, x, y, direction, speed=6, spread_angle=30):
         super().__init__()
         # Charger le sprite sheet de la boule de feu
         self.sprite_sheet = pygame.image.load('./assets/sprites/effects/All_Fire_Bullet_Pixel_16x16.png').convert_alpha()

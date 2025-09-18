@@ -79,7 +79,7 @@ class SubordinateBot(pygame.sprite.Sprite):
         # Variables pour le système de tir et piège aléatoire
         self.last_action_time = pygame.time.get_ticks()
         self.action_interval = 10000  # 10 secondes en millisecondes
-        self.action_probability = 0.5  # 50% de probabilité d'effectuer une action
+        self.action_probability = 0.1  # 50% de probabilité d'effectuer une action
         
         # Récupérer toutes les frames (même système que le joueur)
         self.animations = {
