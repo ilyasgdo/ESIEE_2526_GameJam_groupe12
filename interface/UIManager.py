@@ -229,7 +229,49 @@ class UIManager:
             pygame.draw.rect(screen, (200, 200, 200), (40, self.screen_height - box_h - 40, self.screen_width - 80, box_h), 2, border_radius=10)
             text = self.font.render(self.dialog_text, True, (255, 255, 255))
             screen.blit(text, (60, self.screen_height - box_h - 20))
+        if hasattr(self, "percentage_value"):  # On affiche seulement si défini
+            # Texte principal
+            title = "Chance pour la Terreur du CROUS de gagner :"
+            value = f"{self.percentage_value:.1f} %"
 
+            # Choisir une police plus grande
+            big_font = pygame.font.Font(None, 40)   # plus gros pour la valeur
+            small_font = pygame.font.Font(None, 25) # plus petit pour le titre
+
+            title_surf = small_font.render(title, True, (255, 255, 255))
+            value_surf = big_font.render(value, True, (255, 215, 0))  # or doré pour attirer l’œil
+
+            # Ajouter un contour noir (ombre portée)
+            def render_with_outline(font, text, text_color, outline_color=(0, 0, 0)):
+                base = font.render(text, True, text_color)
+                outline = []
+                for dx, dy in [(-2,0),(2,0),(0,-2),(0,2)]:  # 4 directions
+                    outline.append(font.render(text, True, outline_color))
+                surf = pygame.Surface((base.get_width()+4, base.get_height()+4), pygame.SRCALPHA)
+                for o in outline:
+                    surf.blit(o, (2,2))
+                surf.blit(base, (2,2))
+                return surf
+
+            title_surf = render_with_outline(small_font, title, (255,255,255))
+            value_surf = render_with_outline(big_font, value, (255,215,0))
+
+            # Position en haut à droite avec un fond rectangulaire semi-transparent
+            padding = 10
+            bg_width = max(title_surf.get_width(), value_surf.get_width()) + padding*2
+            bg_height = title_surf.get_height() + value_surf.get_height() + padding*3
+
+            bg_surface = pygame.Surface((bg_width, bg_height), pygame.SRCALPHA)
+            bg_surface.fill((0, 0, 0, 150))  # noir transparent
+
+            # Blit du texte sur le fond
+            bg_surface.blit(title_surf, (padding, padding))
+            bg_surface.blit(value_surf, (padding, padding + title_surf.get_height() + 5))
+
+            # Position finale en haut à droite
+            rect = bg_surface.get_rect()
+            rect.topright = (self.screen_width - 20, 20)
+            screen.blit(bg_surface, rect)
         # Timer circulaire
         if self.countdown_active:
             self._render_countdown(screen)

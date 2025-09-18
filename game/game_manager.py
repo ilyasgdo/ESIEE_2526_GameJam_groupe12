@@ -195,6 +195,8 @@ class GameManager:
             # Appeler la méthode update pour rafraîchir l'affichage
             self.minimap.update()
         # Mise à jour de l'UI (timers, animations UI)
+        self.ui.percentage_value = self.percentage  
+
         self.ui.update()
         
     def check_projectile_hero_collision(self):
