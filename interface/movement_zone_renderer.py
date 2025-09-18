@@ -186,23 +186,20 @@ class MovementZoneRenderer:
         distance_surface = font.render(distance_text, True, text_color)
         percentage_surface = font.render(percentage_text, True, text_color)
         
-        # Position en haut à droite
+        # Position en haut à droite (+100 px vertical +20 px horizontal)
         screen_width = screen.get_width()
         margin = 10
+        y_offset = 100
+        x_offset = 20  # décalage horizontal
         
         distance_rect = distance_surface.get_rect()
-        distance_rect.topright = (screen_width - margin, margin)
+        distance_rect.topright = (screen_width - margin - x_offset, margin + y_offset)
         
         percentage_rect = percentage_surface.get_rect()
-        percentage_rect.topright = (screen_width - margin, margin + distance_rect.height + 5)
+        percentage_rect.topright = (screen_width - margin - x_offset, distance_rect.bottom + 5)
         
-        # Fond semi-transparent
-        bg_rect = pygame.Rect(
-            distance_rect.left - 5,
-            distance_rect.top - 5,
-            max(distance_rect.width, percentage_rect.width) + 10,
-            distance_rect.height + percentage_rect.height + 15
-        )
+        # Fond semi-transparent aligné avec le texte
+        bg_rect = distance_rect.union(percentage_rect).inflate(20, 10)
         
         bg_surface = pygame.Surface((bg_rect.width, bg_rect.height), pygame.SRCALPHA)
         bg_surface.fill((0, 0, 0, 120))
@@ -211,3 +208,6 @@ class MovementZoneRenderer:
         # Afficher le texte
         screen.blit(distance_surface, distance_rect)
         screen.blit(percentage_surface, percentage_rect)
+
+
+

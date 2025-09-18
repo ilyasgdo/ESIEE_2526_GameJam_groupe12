@@ -129,7 +129,6 @@ class DialogueManager:
         if not character == "Narrator":
             sprite_key = CHARACTER_SPRITE_MAP.get(character, character)
             sprite_sheet = self.sprites.get(sprite_key)
-            print(sprite_key)
             
             if sprite_sheet:
                 # Découpage de la première frame (ex: 16x16 ou 32x32 selon ton sheet)
@@ -145,7 +144,6 @@ class DialogueManager:
                 sprite_y = box_y - sprite.get_height() - 20
                 screen.blit(sprite, (sprite_x, sprite_y))
 
-                print(f"[DialogueManager] 🖼️ Sprite affiché (première frame) pour '{character}' (-> {sprite_key})")
 
 
         # Nom du personnage
