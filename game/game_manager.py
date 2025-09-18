@@ -570,6 +570,9 @@ class GameManager:
                 self.reset_game()
             return
         self.handle_movent(pressed)
+
+        # Utiliser le système de contrôle unifié du joueur
+        self.player.handle_input(pressed)
         self.handle_collision()
         self.handle_action(pressed)
 

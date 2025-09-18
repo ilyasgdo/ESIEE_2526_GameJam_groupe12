@@ -36,6 +36,27 @@ def main():
     game_manager = GameManager(screen)
 
     game_manager.dialogue_manager.start_scene("scene_intro")
+    
+    # Afficher les instructions de contrôle
+    print("=== Contrôles du jeu ===")
+    print("Mode Clavier (par défaut):")
+    print("- WASD/Flèches: Mouvement")
+    print("- ESPACE: Tirer")
+    print("- G: Placer un piège")
+    print("- H: Placer une bombe")
+    print()
+    print("Basculer entre les modes:")
+    print("- C: Activer Computer Vision")
+    print("- K: Retour au clavier")
+    print()
+    print("Mode Computer Vision:")
+    print("- 1 doigt levé: Avancer")
+    print("- 2 doigts levés: Tourner à gauche")
+    print("- 3 doigts levés: Tourner à droite")
+    print("- 4 doigts levés: Reculer")
+    print("- Poing fermé: Tirer")
+    print("- Q dans la fenêtre CV: Fermer la caméra")
+    print("="*30)
     running = True
     while running:
         for event in pygame.event.get():
@@ -45,6 +66,15 @@ def main():
                 running = False
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_n:
                 game_manager.handle_dialogue()
+            # Contrôles pour basculer entre les modes
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_c:
+                # Basculer vers computer vision
+                game_manager.player.set_control_mode("computer_vision")
+                print("Mode Computer Vision activé")
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_k:
+                # Basculer vers clavier
+                game_manager.player.set_control_mode("keyboard")
+                print("Mode Clavier activé")
             # Exemple de raccourcis pour tes capacités
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_l:
