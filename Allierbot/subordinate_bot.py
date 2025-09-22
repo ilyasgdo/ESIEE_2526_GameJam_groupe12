@@ -1,6 +1,13 @@
 import pygame
 import math
 import random
+
+from utils.animation import (
+    load_sprite_sheet,
+    load_directional_animations,
+    change_direction,
+    advance_animation,
+)
 from actions.fire_ball import FireBall
 from actions.bomb import Bomb
 from actions.trap import Trap
@@ -10,7 +17,7 @@ class SubordinateBot(pygame.sprite.Sprite):
     def __init__(self, x, y, leader, formation_angle, formation_radius=60):
         super().__init__()
         # Utiliser le même sprite sheet que le joueur mais avec une couleur différente
-        self.sprite_sheet = pygame.image.load('./assets/sprites/player/Sousfifre.png').convert_alpha()
+        self.sprite_sheet = load_sprite_sheet('./assets/sprites/player/Sousfifre.png')
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [float(x), float(y)]
         self.old_position = self.position.copy()  # Pour la gestion des collisions
@@ -82,12 +89,17 @@ class SubordinateBot(pygame.sprite.Sprite):
         self.action_probability = 0.1  # 50% de probabilité d'effectuer une action
         
         # Récupérer toutes les frames (même système que le joueur)
-        self.animations = {
-            'down': self.load_row(5),
-            'left': self.load_row(7),
-            'right': self.load_row(9),
-            'up': self.load_row(11)
-        }
+        self.animations = load_directional_animations(
+            self.sprite_sheet,
+            32,
+            32,
+            {
+                'down': 5,
+                'left': 7,
+                'right': 9,
+                'up': 11,
+            },
+        )
         
         # Appliquer une teinte bleue pour distinguer les subordonnés
         self.apply_tint((150, 200, 255))  # Teinte bleue
@@ -125,33 +137,23 @@ class SubordinateBot(pygame.sprite.Sprite):
         """Vérifier si le bot peut se déplacer à la position donnée"""
         return not self.check_collision_at_position(new_x, new_y)
 
-    def get_image(self, x, y):
-        """Récupère une image du sprite sheet"""
-        image = pygame.Surface((32, 32), pygame.SRCALPHA)
-        image.blit(self.sprite_sheet, (0, 0), (x, y, 32, 32))
-        return image
-
-    def load_row(self, row):
-        """Charge une ligne complète d'animations"""
-        return [self.get_image(x * 32, row * 32) for x in range(4)]
-
     def apply_tint(self, color):
         """Applique une teinte colorée aux animations"""
         for direction in self.animations:
             for i, frame in enumerate(self.animations[direction]):
                 # Créer une surface avec la teinte
                 tinted_frame = frame.copy()
-                tint_surface = pygame.Surface((32, 32), pygame.SRCALPHA)
+                tint_surface = pygame.Surface(frame.get_size(), pygame.SRCALPHA)
                 tint_surface.fill(color + (100,))  # Alpha de 100 pour la teinte
                 tinted_frame.blit(tint_surface, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
                 self.animations[direction][i] = tinted_frame
 
     def change_animation(self, direction):
-        """Change la direction de l'animation"""
-        if direction != self.current_direction:
-            self.current_direction = direction
-            self.frame_index = 0
-
+        self.current_direction, self.frame_index = change_direction(
+            self.current_direction,
+            direction,
+            self.frame_index,
+        )
     def calculate_formation_position(self):
         """Calcule la position cible dans la formation autour du leader avec mouvement aléatoire et suivi de trajectoire"""
         if not self.leader:
@@ -454,14 +456,13 @@ class SubordinateBot(pygame.sprite.Sprite):
         self.rect.topleft = self.position
         
         # Mettre à jour l'animation
-        if self.is_moving:
-            self.frame_index += self.animation_speed
-            if self.frame_index >= len(self.animations[self.current_direction]):
-                self.frame_index = 0
-            self.image = self.animations[self.current_direction][int(self.frame_index)]
-        else:
-            self.image = self.animations[self.current_direction][0]
-
+        frames = self.animations[self.current_direction]
+        self.frame_index, self.image = advance_animation(
+            self.frame_index,
+            frames,
+            self.animation_speed,
+            self.is_moving,
+        )
     def get_position(self):
         """Retourne la position actuelle du subordonné"""
         return (self.position[0], self.position[1])

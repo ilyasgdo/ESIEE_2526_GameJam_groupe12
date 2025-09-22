@@ -2,6 +2,13 @@ import pygame
 import math
 import random
 
+from utils.animation import (
+    load_sprite_sheet,
+    load_directional_animations,
+    change_direction,
+    advance_animation,
+)
+
 from actions.actions import check_trap
 
 
@@ -9,7 +16,7 @@ class Bot(pygame.sprite.Sprite):
     def __init__(self, x, y, ally_bot, game_manager):
         super().__init__()
         # Utiliser le même sprite sheet que le joueur mais avec une couleur différente
-        self.sprite_sheet = pygame.image.load('assets/sprites/player/Hero.png').convert_alpha()
+        self.sprite_sheet = load_sprite_sheet('assets/sprites/player/Hero.png')
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [float(x), float(y)]
         self.old_position = self.position.copy()  # Pour la gestion des collisions
@@ -145,12 +152,18 @@ class Bot(pygame.sprite.Sprite):
         self.collision_objects = []
         
         # Récupérer toutes les frames (même système que le joueur)
-        self.animations = {
-            'down': self.load_row(0),
-            'left': self.load_row(2),
-            'right': self.load_row(1),
-            'up': self.load_row(3)
-        }
+        self.animations = load_directional_animations(
+            self.sprite_sheet,
+            32,
+            32,
+            {
+                'down': 0,
+                'left': 2,
+                'right': 1,
+                'up': 3,
+            },
+            scale=2.0,
+        )
         
         # Appliquer une teinte différente pour distinguer le bot
         self.apply_tint((255, 200, 200))  # Teinte rosée
@@ -188,36 +201,23 @@ class Bot(pygame.sprite.Sprite):
         """Vérifier si le bot peut se déplacer à la position donnée"""
         return not self.check_collision_at_position(new_x, new_y)
 
-    def get_image(self, x, y, scale=2):
-        """Extraire une image du sprite sheet"""
-        frame = pygame.Surface((32, 32), pygame.SRCALPHA)
-        frame.blit(self.sprite_sheet, (0, 0), (x, y, 32, 32))
-        # Agrandir la frame
-        size = frame.get_width() * scale, frame.get_height() * scale
-        frame = pygame.transform.scale(frame, size)
-        return frame
-
-    def load_row(self, row, scale=2):
-        """Charge une ligne d'animation et scale chaque frame"""
-        return [self.get_image(col * 32, row * 32, scale) for col in range(4)]
-    
     def apply_tint(self, color):
         """Appliquer une teinte colorée aux animations pour différencier le bot"""
         for direction in self.animations:
             for i, frame in enumerate(self.animations[direction]):
                 # Créer une surface avec la teinte
                 tinted_frame = frame.copy()
-                tint_surface = pygame.Surface((32, 32), pygame.SRCALPHA)
+                tint_surface = pygame.Surface(frame.get_size(), pygame.SRCALPHA)
                 tint_surface.fill((*color, 100))  # Alpha de 100 pour un effet subtil
                 tinted_frame.blit(tint_surface, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
                 self.animations[direction][i] = tinted_frame
 
     def change_animation(self, direction):
-        """Changer la direction d'animation"""
-        if self.current_direction != direction:
-            self.current_direction = direction
-            self.frame_index = 0
-
+        self.current_direction, self.frame_index = change_direction(
+            self.current_direction,
+            direction,
+            self.frame_index,
+        )
     def get_distance_to_checkpoint(self):
         """Calcule la distance au checkpoint actuel"""
         if self.current_checkpoint_index >= len(self.checkpoints):
@@ -450,10 +450,11 @@ class Bot(pygame.sprite.Sprite):
         self.rect.topleft = (int(self.position[0]), int(self.position[1]))
         
         # Mise à jour de l'animation
-        if self.is_moving:
-            self.frame_index += self.animation_speed
-            if self.frame_index >= len(self.animations[self.current_direction]):
-                self.frame_index = 0
-            self.image = self.animations[self.current_direction][int(self.frame_index)]
-        else:
-            self.image = self.animations[self.current_direction][0]
+        frames = self.animations[self.current_direction]
+        self.frame_index, self.image = advance_animation(
+            self.frame_index,
+            frames,
+            self.animation_speed,
+            self.is_moving,
+        )
+

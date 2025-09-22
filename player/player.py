@@ -1,10 +1,17 @@
 import pygame
 import math
 
+from utils.animation import (
+    load_sprite_sheet,
+    load_directional_animations,
+    change_direction,
+    advance_animation,
+)
+
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
-        self.sprite_sheet = pygame.image.load('./assets/sprites/player/Sousfifre.png').convert_alpha()
+        self.sprite_sheet = load_sprite_sheet('./assets/sprites/player/Sousfifre.png')
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [x, y]
         self.speed = 3
@@ -29,12 +36,17 @@ class Player(pygame.sprite.Sprite):
         self._was_moving = False
 
         # Récupérer toutes les frames
-        self.animations = {
-            'down': self.load_row(5),
-            'left': self.load_row(7),
-            'right': self.load_row(9),
-            'up': self.load_row(11)
-        }
+        self.animations = load_directional_animations(
+            self.sprite_sheet,
+            32,
+            32,
+            {
+                'down': 5,
+                'left': 7,
+                'right': 9,
+                'up': 11,
+            },
+        )
         self.feet = pygame.Rect(0, 0, self.rect.width/2, 12)
 
         self.image = self.animations['down'][0]
@@ -43,24 +55,17 @@ class Player(pygame.sprite.Sprite):
         # Variables pour gérer les mouvements multiples
         self.movement_directions = {'up': False, 'down': False, 'left': False, 'right': False}
 
-    def get_image(self, x, y):
-        image = pygame.Surface((32, 32), pygame.SRCALPHA)
-        image.blit(self.sprite_sheet, (0, 0), (x, y, 32, 32))
-        return image
-
-    def load_row(self, row):
-        """Charge une ligne de 4 frames à partir du sprite sheet"""
-        return [self.get_image(col * 32, row * 32) for col in range(4)]
-
     def save_location(self): self.old_position = self.position.copy()
 
     def set_audio(self, audio_manager):
         self.audio = audio_manager
 
     def change_animation(self, direction):
-        if self.current_direction != direction:
-            self.current_direction = direction
-            self.frame_index = 0
+        self.current_direction, self.frame_index = change_direction(
+            self.current_direction,
+            direction,
+            self.frame_index,
+        )
     def determine_animation_direction(self):
         """Détermine la direction d'animation selon les touches pressées"""
         pressed_dirs = [dir for dir, active in self.movement_directions.items() if active]
@@ -177,17 +182,16 @@ class Player(pygame.sprite.Sprite):
             # Change l'animation seulement si nécessaire
             if self.current_direction != animation_direction:
                 self.change_animation(animation_direction)
-            
-            self.last_direction = animation_direction
-            
-            # Met à jour l'animation
-            self.frame_index += self.animation_speed
-            if self.frame_index >= len(self.animations[self.current_direction]):
-                self.frame_index = 0
-            self.image = self.animations[self.current_direction][int(self.frame_index)]
-        else:
-            self.image = self.animations[self.current_direction][0]
 
+            self.last_direction = animation_direction
+
+        frames = self.animations[self.current_direction]
+        self.frame_index, self.image = advance_animation(
+            self.frame_index,
+            frames,
+            self.animation_speed,
+            self.is_moving,
+        )
         moving_now = self.is_moving
         if self.audio:
             if moving_now and not self._was_moving:

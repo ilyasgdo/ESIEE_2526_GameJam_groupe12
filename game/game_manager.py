@@ -234,25 +234,33 @@ class GameManager:
             self.ui.show('dialog', message)
 
     def trigger_end_screen_with_percentage(self):
-        """Déclenche l'écran de fin basé sur le pourcentage de victoire de l'ally bot"""
+        """Declenche l'ecran de fin en utilisant le pourcentage actuel comme chance de victoire"""
         if not self.game_ended:
             self.game_ended = True
             self.end_screen_timer = pygame.time.get_ticks()
-            
-            # Activer les barres cinématiques
+
+            # Conserver le pourcentage accumule et l'utiliser comme probabilite
+            win_chance = max(0.0, min(self.percentage, 100.0))
+            roll = random.random() * 100.0
+
+            # Activer les barres cinematiques
             self.ui.show('cinematic_bars')
-            
-            # Déterminer le résultat basé sur le pourcentage
-            # Si le pourcentage est >= 60%, c'est une victoire, sinon défaite
-            if self.percentage >= 70:
+
+            if roll < win_chance:
                 self.end_screen_result = 'victory'
-                print(f"🎉 VICTOIRE DU MÉCHANT! Pourcentage final: {self.percentage:.1f}% - Score: {self.score}")
-                message = f"VICTOIRE! Le méchant triomphe!\nPourcentage: {self.percentage:.1f}% - Score: {self.score}"
+                print(f"Victoire du mechant ! Chance: {win_chance:.1f}% (tirage {roll:.1f}%) - Score: {self.score}")
+                message = (
+                    f"VICTOIRE! Le mechant triomphe!\n"
+                    f"Chance: {win_chance:.1f}% (tirage {roll:.1f}%) - Score: {self.score}"
+                )
             else:
                 self.end_screen_result = 'defeat'
-                print(f"😔 DÉFAITE DU MÉCHANT! Pourcentage final: {self.percentage:.1f}% - Score: {self.score}")
-                message = f"DÉFAITE! Le héros a gagné...\nPourcentage: {self.percentage:.1f}% - Score: {self.score}"
-            
+                print(f"Defaite du mechant ! Chance: {win_chance:.1f}% (tirage {roll:.1f}%) - Score: {self.score}")
+                message = (
+                    f"DEFAITE! Le heros a gagne...\n"
+                    f"Chance: {win_chance:.1f}% (tirage {roll:.1f}%) - Score: {self.score}"
+                )
+
             # Afficher le message dans l'UI
             self.ui.show('dialog', message)
 

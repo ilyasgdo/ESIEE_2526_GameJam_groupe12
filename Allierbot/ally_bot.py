@@ -2,6 +2,14 @@ import pygame
 import math
 import random
 import time
+
+from utils.animation import (
+    load_sprite_sheet,
+    load_directional_animations,
+    change_direction,
+    advance_animation,
+)
+
 from actions.fire_ball import FireBall
 from actions.bomb import Bomb
 from actions.actions import TAB_ACTION
@@ -10,7 +18,7 @@ class AllyBot(pygame.sprite.Sprite):
     def __init__(self, x, y, player):
         super().__init__()
         # Utiliser le même sprite sheet que le joueur mais avec une couleur différente
-        self.sprite_sheet = pygame.image.load('./assets/sprites/player/BigBoss.png').convert_alpha()
+        self.sprite_sheet = load_sprite_sheet('./assets/sprites/player/BigBoss.png')
         self.rect = pygame.Rect(x, y, 32, 32)
         self.position = [float(x), float(y)]
         self.old_position = self.position.copy()  # Pour la gestion des collisions
@@ -123,12 +131,18 @@ class AllyBot(pygame.sprite.Sprite):
         self.collision_objects = []
         
         # Récupérer toutes les frames (même système que le joueur)
-        self.animations = {
-            'down': self.load_row(0),
-            'left': self.load_row(2),
-            'right': self.load_row(1),
-            'up': self.load_row(3)
-        }
+        self.animations = load_directional_animations(
+            self.sprite_sheet,
+            32,
+            32,
+            {
+                'down': 0,
+                'left': 2,
+                'right': 1,
+                'up': 3,
+            },
+            scale=3.0,
+        )
         
         # Appliquer une teinte différente pour distinguer le bot allié
         
@@ -165,19 +179,6 @@ class AllyBot(pygame.sprite.Sprite):
         """Vérifier si le bot peut se déplacer à la position donnée"""
         return not self.check_collision_at_position(new_x, new_y)
 
-    def get_image(self, x, y, scale=3):
-        frame = pygame.Surface((32, 32), pygame.SRCALPHA)
-        frame.blit(self.sprite_sheet, (0, 0), (x, y, 32, 32))
-
-        # Agrandir la frame
-        size = frame.get_width() * scale, frame.get_height() * scale
-        frame = pygame.transform.scale(frame, size)
-        return frame
-
-    def load_row(self, row, scale=3):
-        """Charge une ligne d'animation et scale chaque frame"""
-        return [self.get_image(col * 32, row * 32, scale) for col in range(4)]
-
     def apply_tint(self, color):
         """Applique une teinte colorée aux sprites"""
         for direction in self.animations:
@@ -190,11 +191,11 @@ class AllyBot(pygame.sprite.Sprite):
                 self.animations[direction][i] = tinted_frame
 
     def change_animation(self, direction):
-        """Change la direction d'animation"""
-        if direction != self.current_direction:
-            self.current_direction = direction
-            self.frame_index = 0
-
+        self.current_direction, self.frame_index = change_direction(
+            self.current_direction,
+            direction,
+            self.frame_index,
+        )
     def update_random_movement(self):
         """Met à jour le mouvement aléatoire avec tendance vers le haut et variations naturelles"""
         self.direction_change_timer += 1
@@ -352,13 +353,13 @@ class AllyBot(pygame.sprite.Sprite):
             self.is_moving = False
         
         # Animation
-        if self.is_moving:
-            self.frame_index += self.animation_speed
-            if self.frame_index >= len(self.animations[self.current_direction]):
-                self.frame_index = 0
-            self.image = self.animations[self.current_direction][int(self.frame_index)]
-        else:
-            self.image = self.animations[self.current_direction][0]
+        frames = self.animations[self.current_direction]
+        self.frame_index, self.image = advance_animation(
+            self.frame_index,
+            frames,
+            self.animation_speed,
+            self.is_moving,
+        )
 
     def get_position(self):
         """Retourne la position actuelle du bot allié"""
